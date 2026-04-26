@@ -1,5 +1,6 @@
 import heroWave from "@/assets/hero-wave.png";
 import { ArrowRight, Mic } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -24,14 +25,19 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-up" style={{ animationDelay: '0.3s', opacity: 0 }}>
-          <button className="group relative inline-flex items-center gap-3 bg-gradient-primary text-foreground font-semibold px-8 py-4 rounded-full shadow-soft hover:shadow-glow transition-all hover:scale-105">
-            <Mic className="w-5 h-5" />
-            Empieza tu primera charla
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-          <button className="glass rounded-full px-8 py-4 font-medium hover:bg-white/80 transition-all">
-            Conoce a A.I.S.E.
-          </button>
+          <Link to="/login" >
+            <button className="group relative inline-flex items-center gap-3 bg-gradient-primary text-foreground font-semibold px-8 py-4 rounded-full shadow-soft hover:shadow-glow transition-all hover:scale-105">
+              <Mic className="w-5 h-5" />
+              Empieza tu primera charla
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </Link>
+          <Link to="/login" >
+            <button className="glass rounded-full px-8 py-4 font-medium hover:bg-white/80 transition-all">
+              Conoce a A.I.S.E.
+            </button>
+          </Link>
+
         </div>
 
         {/* Hero illustration */}

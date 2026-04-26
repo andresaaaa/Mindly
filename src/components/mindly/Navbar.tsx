@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const Navbar = () => {
   return (
     <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(1200px,92%)]">
@@ -11,9 +13,12 @@ const Navbar = () => {
           <a href="#testimonials" className="hover:text-foreground transition-colors">Testimonios</a>
           <a href="#aise" className="hover:text-foreground transition-colors">A.I.S.E.</a>
         </div>
-        <button className="text-sm font-semibold px-5 py-2 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
+        <Link 
+          to="/login"
+          className="text-sm font-semibold px-5 py-2 rounded-full bg-foreground text-background hover:opacity-90 transition-opacity"
+        >
           Iniciar
-        </button>
+        </Link>
       </div>
     </nav>
   );

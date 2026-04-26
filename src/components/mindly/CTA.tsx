@@ -1,4 +1,5 @@
 import { Mic } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const CTA = () => {
   return (
@@ -14,10 +15,12 @@ const CTA = () => {
           <p className="text-muted-foreground text-lg mb-10 max-w-xl mx-auto">
             Sin presiones. Sin juicios. Solo tú, tu voz y A.I.S.E. escuchando.
           </p>
-          <button className="group inline-flex items-center gap-3 bg-foreground text-background font-semibold px-8 py-4 rounded-full hover:scale-105 transition-transform shadow-soft">
-            <Mic className="w-5 h-5" />
-            Empieza tu primera charla
-          </button>
+          <Link to="/login" >
+            <button className="group inline-flex items-center gap-3 bg-foreground text-background font-semibold px-8 py-4 rounded-full hover:scale-105 transition-transform shadow-soft">
+              <Mic className="w-5 h-5" />
+              Empieza tu primera charla
+            </button>
+          </Link>
         </div>
       </div>
     </section>
