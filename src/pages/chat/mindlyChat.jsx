@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import "./mindlyChat_Style.css";
 
 const WAVE_HEIGHTS = [48, 96, 144, 192, 128, 224, 160, 256, 176, 128, 80, 48];
@@ -11,13 +12,22 @@ const NAV_ITEMS = [
 ];
 
 export default function AISESession() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <div className="aise-root">
       {/* Header */}
       <header className="aise-header">
-        <div className="header-brand">
-          <span className="material-symbols-outlined header-brand-icon">spa</span>
-          <span className="header-brand-name">Mindly</span>
+        <div className="header-left">
+          <button className="menu-btn" onClick={toggleSidebar} aria-label="Toggle Menu">
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          <div className="header-brand">
+            <span className="material-symbols-outlined header-brand-icon">spa</span>
+            <span className="header-brand-name">Mindly</span>
+          </div>
         </div>
         <div className="header-actions">
           <button className="icon-btn" aria-label="Emergency share">
@@ -114,20 +124,25 @@ export default function AISESession() {
         </div>
       </main>
 
-      {/* Bottom Nav */}
-      <nav className="aise-nav">
-        {NAV_ITEMS.map(({ icon, label, active }) => (
-          <a
-            key={label}
-            href="#"
-            className={`nav-item${active ? " active" : ""}`}
-            aria-label={label}
-          >
-            <span className="material-symbols-outlined">{icon}</span>
-            <span className="nav-label">{label}</span>
-          </a>
-        ))}
-      </nav>
+      {/* Sidebar Nav */}
+      <aside className={`aise-sidebar ${sidebarOpen ? "open" : ""}`}>
+        <nav className="sidebar-nav">
+          {NAV_ITEMS.map(({ icon, label, active }) => (
+            <a
+              key={label}
+              href="#"
+              className={`nav-item${active ? " active" : ""}`}
+              aria-label={label}
+            >
+              <span className="material-symbols-outlined">{icon}</span>
+              <span className="nav-label">{label}</span>
+            </a>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar} />}
     </div>
   );
 }
