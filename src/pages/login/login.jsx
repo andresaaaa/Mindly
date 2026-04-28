@@ -1,13 +1,45 @@
 import React, { useState } from "react";
 import "./login_style.css";
+import { auth, googleProvider } from "../../firebaseConfig"; // Asegúrate de que esta ruta sea correcta
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+
+const LoginForm = () => {
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    alert("Bienvenido de nuevo 🌸");
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("Sesión iniciada:", userCredential.user);
+      alert("¡Bienvenido!");
+      navigate('/voiceChat');
+      
+    } catch (error) {
+      // Aquí validas qué salió mal
+      if (error.code === 'auth/invalid-credential') {
+        alert("Credenciales incorrectas. Revisa tu correo o contraseña.");
+      } else {
+        alert("Error al iniciar sesión: " + error.message);
+      }
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      console.log("Sesión iniciada con Google:", result.user);
+      alert("¡Bienvenido!");
+      navigate('/voiceChat');
+    } catch (error) {
+      alert("Error al iniciar sesión con Google: " + error.message);
+    }
   };
 
   return (
@@ -68,7 +100,7 @@ export default function Login() {
               <p className="auth-card-sub">Enter your details to continue your journey.</p>
             </div>
 
-            <form className="auth-form" onSubmit={handleSubmit}>
+            <form className="auth-form" onSubmit={handleLogin}>
               <div className="field-group">
                 <label className="field-label" htmlFor="email">Email Address</label>
                 <input
@@ -92,6 +124,7 @@ export default function Login() {
                   type="password"
                   placeholder="••••••••"
                   value={password}
+
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
@@ -109,7 +142,7 @@ export default function Login() {
             </div>
 
             <div className="social-grid">
-              <button className="social-btn" type="button">
+              <button className="social-btn" type="button" onClick={handleGoogleLogin}>
                 <img
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMTthp3fJReo1Xr7YjId8h9rSPF952lZfEWewOf755rGgPuxWA0SnzuXUqibqysoMuO4rRlIFhn_2U2xb3ItC0uyfB2wWxuasNMObxMVkR8PLqPWNoS5qJNBtQEkHiqSbuFV7FuznQEjC8xpdSko8YpHn5vUe1HRLqohYyotgnxuiT8cysfLuUHDxZ1zEjnbyofr76a4tw4RfexAswkVecPQ_WsXWLRJhXcO8nEmJ7cYtl0HMFznxPxhVk_-qB8ggkuOq4zD7JeqM"
                   alt="Google"
@@ -155,3 +188,5 @@ export default function Login() {
     </div>
   );
 }
+
+export default LoginForm;
