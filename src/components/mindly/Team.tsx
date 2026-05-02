@@ -1,7 +1,7 @@
 const team = [
   {
     name: "Andrés Barragan",
-    role: "Full-Stack · Project Manager · Arquitecto de IA",
+    role: "Full-Stack · Project Manager",
     initials: "AB",
     accent: "from-pink/60 to-lavender/60",
   },
