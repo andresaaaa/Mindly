@@ -9,6 +9,7 @@ const Navbar = () => {
           <span className="font-bold text-lg tracking-tight">Mindly</span>
         </a>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+          <a href="#inicio" className="hover:text-foreground transition-colors">Mindly</a>
           <a href="#features" className="hover:text-foreground transition-colors">Funcionalidades</a>
           <a href="#testimonials" className="hover:text-foreground transition-colors">Testimonios</a>
           <a href="#aise" className="hover:text-foreground transition-colors">A.I.S.E.</a>

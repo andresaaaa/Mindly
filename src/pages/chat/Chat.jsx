@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import "./mindlyChat_Style.css";
+import "./Chat_Style.css";
 
 const WAVE_HEIGHTS = [48, 96, 144, 192, 128, 224, 160, 256, 176, 128, 80, 48];
 
 const NAV_ITEMS = [
-  { icon: "home",       label: "Home",    active: false },
-  { icon: "bubble_chart", label: "Mood", active: false },
-  { icon: "air",        label: "Breath",  active: true  },
-  { icon: "edit_note",  label: "Journal", active: false },
-  { icon: "person",     label: "Me",      active: false },
+  { icon: "home",       label: "Inico",    active: false, path: "/" },
+  { icon: "person",     label: "Perfil",      active: false, path: "/perfil" },
+  { icon: "voice_chat",     label: "A.I.S.E chat", active: true, path: "/chat" },
+  { icon: "health_and_safety",        label: "S.O.S",  active: false,  path: "/sos" },
+  { icon: "book",     label: "Historial",      active: false, path: "/historial" },
+  { icon: "settings",  label: "Configuracion", active: false, path: "/configuracion" },
 ];
 
 export default function AISESession() {
@@ -127,10 +128,10 @@ export default function AISESession() {
       {/* Sidebar Nav */}
       <aside className={`aise-sidebar ${sidebarOpen ? "open" : ""}`}>
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ icon, label, active }) => (
+          {NAV_ITEMS.map(({ icon, label, active, path }) => (
             <a
               key={label}
-              href="#"
+              href={path}
               className={`nav-item${active ? " active" : ""}`}
               aria-label={label}
             >
