@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVoiceLogic } from '../../backend/Voice_logic.js';
-import '../Chat/Chat_Style.css';
+import './Chat_Style.css';
 
 const VoiceInterface = () => {
   const navigate = useNavigate();
