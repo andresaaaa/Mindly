@@ -52,7 +52,7 @@ const VoiceInterface = () => {
             <span className="material-symbols-outlined text-[24px]">air</span>
             <span className="font-label-md text-label-md">Breath</span>
           </a>
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="/historial">
             <span className="material-symbols-outlined text-[24px]">edit_note</span>
             <span className="font-label-md text-label-md">Journal</span>
           </a>

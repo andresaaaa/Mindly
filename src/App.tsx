@@ -9,6 +9,7 @@ import LoginForm from "./pages/login/login.jsx";
 import VoiceInterface from "./pages/chat/Chat.jsx";
 import Dashboard from "./pages/dahsboard/dashboard.jsx";
 import EmergencyMode from "./pages/s.o.s/canales_Atencion.jsx";
+import MemoryLane from "./pages/historial/memory_Line.jsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/login" element={<LoginForm />} />
           <Route path="/chat" element={<VoiceInterface />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/historial" element={<MemoryLane />} />
           {/* <Route path="/perfil" element={<Perfil />} /> */}
           {/* <Route path="/configuracion" element={<Configuracion />} /> */}
           <Route path="/sos" element={<EmergencyMode />} />
