@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebaseConfig';
 import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
 
@@ -7,12 +9,13 @@ import './Chat_Style.css';
 const VoiceInterface = () => {
   const navigate = useNavigate();
 
-  const navigateToHome = () => {
-    navigate("/");
-  };
-
-  const navigateToDashboard = () => {
-    navigate("/dashboard");
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   };
 
   const {
@@ -41,29 +44,29 @@ const VoiceInterface = () => {
           <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60">Mindful Resonance</p>
         </div>
         <nav className="flex flex-col gap-6">
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
             <span className="material-symbols-outlined text-[24px]">dashboard</span>
             <span className="font-label-md text-label-md">Dashboard</span>
-          </a>
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+          </button>
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
             <span className="material-symbols-outlined text-[24px]">mood</span>
             <span className="font-label-md text-label-md">Mood</span>
-          </a>
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+          </button>
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/sos'); }}>
             <span className="material-symbols-outlined text-[24px]">air</span>
             <span className="font-label-md text-label-md">Breath</span>
-          </a>
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="../historial/memory_Line.jsx">
+          </button>
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/historial'); }}>
             <span className="material-symbols-outlined text-[24px]">edit_note</span>
             <span className="font-label-md text-label-md">Journal</span>
-          </a>
-          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" href="#">
+          </button>
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
             <span className="material-symbols-outlined text-[24px]">person</span>
             <span className="font-label-md text-label-md">Me</span>
-          </a>
+          </button>
         </nav>
         <div className="mt-auto">
-          <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors">
+          <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors" onClick={handleLogout}>
             <span className="material-symbols-outlined text-[20px]">logout</span>
             <span className="font-label-md text-label-md">Cerrar sesión</span>
           </button>
@@ -83,7 +86,7 @@ const VoiceInterface = () => {
             <h1 className="font-headline-md text-headline-md text-primary opacity-80 tracking-widest hidden md:block">A.I.S.E.</h1>
             <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60 hidden md:block">Mindful Resonance</p>
           </div>
-          <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors">
+          <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors" onClick={() => navigate('/sos')}>
             <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
             <span className="font-label-md text-label-md">S.O.S.</span>
           </button>
