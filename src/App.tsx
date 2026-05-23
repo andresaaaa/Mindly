@@ -6,11 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import LoginForm from "./pages/login/login.jsx";
-import Chat from "./pages/chat/Chat.jsx";
-import MindlyCrisis from "./pages/s.o.s/mindlyCrisis";
-// import Perfil from "./pages/perfil/Perfil.jsx";
-import Historial from "./pages/historial/sesionhistory.jsx";
-// import Configuracion from "./pages/configuracion/configuracion.jsx";
+import VoiceInterface from "./pages/chat/Chat.jsx";
+import Dashboard from "./pages/dahsboard/dashboard.jsx";
+import EmergencyMode from "./pages/s.o.s/canales_Atencion.jsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -21,11 +19,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginForm />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/sos" element={<MindlyCrisis />} />
-          <Route path="/historial" element={<Historial />} />
+          <Route path="/chat" element={<VoiceInterface />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           {/* <Route path="/perfil" element={<Perfil />} /> */}
-          {/* <Route path="/configuracion" element={<Configuracion />} */}
+          {/* <Route path="/configuracion" element={<Configuracion />} /> */}
+          <Route path="/sos" element={<EmergencyMode />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<Index />} />
         </Routes>

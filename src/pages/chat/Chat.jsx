@@ -1,149 +1,130 @@
-import React, { useState } from "react";
-import "./Chat_Style.css";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useVoiceLogic } from '../../backend/Voice_logic.js';
+import '../Chat/Chat_Style.css';
 
-const WAVE_HEIGHTS = [48, 96, 144, 192, 128, 224, 160, 256, 176, 128, 80, 48];
+const VoiceInterface = () => {
+  const navigate = useNavigate();
 
-const NAV_ITEMS = [
-  { icon: "home",       label: "Inico",    active: false, path: "/" },
-  { icon: "person",     label: "Perfil",      active: false, path: "/perfil" },
-  { icon: "voice_chat",     label: "A.I.S.E chat", active: true, path: "/chat" },
-  { icon: "health_and_safety",        label: "S.O.S",  active: false,  path: "/sos" },
-  { icon: "book",     label: "Historial",      active: false, path: "/historial" },
-  { icon: "settings",  label: "Configuracion", active: false, path: "/configuracion" },
-];
+  const navigateToHome = () => {
+    navigate("/");
+  };
 
-export default function AISESession() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const navigateToDashboard = () => {
+    navigate("/dashboard");
+  };
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const {
+    isSidebarOpen,
+    toggleSidebar,
+    currentPhrase,
+    transcriptionOpacity,
+    orbRef,
+    glowRef
+  } = useVoiceLogic();
 
   return (
-    <div className="aise-root">
-      {/* Header */}
-      <header className="aise-header">
-        <div className="header-left">
-          <button className="menu-btn" onClick={toggleSidebar} aria-label="Toggle Menu">
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-          <div className="header-brand">
-            <span className="material-symbols-outlined header-brand-icon">spa</span>
-            <span className="header-brand-name">Mindly</span>
-          </div>
+    <div className="flex flex-col h-screen overflow-hidden text-on-surface bg-[#fff8f9] font-['Montserrat']">
+      {/* Capa de fondo Aurora */}
+      <div className="aurora-bg"></div>
+
+      {/* Overlay y Sidebar */}
+      <div
+        className={`sidebar-overlay fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-400 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={toggleSidebar}
+      ></div>
+
+      <aside className={`sidebar-transition fixed top-0 left-0 h-full w-72 bg-white/80 backdrop-blur-xl z-50 shadow-2xl border-r border-primary/10 px-8 py-12 flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="mb-12">
+          <h2 className="font-headline-md text-headline-md text-primary tracking-widest">A.I.S.E.</h2>
+          <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60">Mindful Resonance</p>
         </div>
-        <div className="header-actions">
-          <button className="icon-btn" aria-label="Emergency share">
-            <span className="material-symbols-outlined">emergency_share</span>
-          </button>
-          <button className="icon-btn" aria-label="Notifications">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <div className="avatar-wrap">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx6LjtmJxVHsH4tdIW-6i7KRnXR6VjusXSyiG2ed6TpwPY1RdJos6yUZp2V-ngwBe4P44QufmCtdQZa7hsVbG8sQllFtPSwHVBTWFbRLzgVpW1wfIpNBgyzvvCMTlW_xR8wA9FSjeIBJCWbINB_O1Ozb2ezbdNEPhl11qycLf0LhjCl0pJXHUrXLBVfX0cp49q4HRF0iCj9gx9GXm_Rj7dHljkw7GN54eUtKEh6D8US8qJVWnv9PCmMYlDUgnXwEmahXxdtmvLUPQ"
-              alt="User profile"
-            />
-          </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="aise-main">
-        {/* Background gradient */}
-        <div className="bg-gradient-radial" />
-
-        {/* Session status */}
-        <div className="session-status">
-          <div className="session-badge">
-            <span className="pulse-dot">
-              <span className="pulse-ring" />
-              <span className="pulse-core" />
-            </span>
-            <span className="badge-label">A.I.S.E SESSION ACTIVE</span>
-          </div>
-          <h1 className="session-title">How are you feeling, Sarah?</h1>
-          <p className="session-subtitle">
-            I'm listening. Take your time to express whatever is on your mind.
-          </p>
-        </div>
-
-        {/* Visualizer */}
-        <div className="visualizer-area">
-          <div className="voice-wave-container">
-            {WAVE_HEIGHTS.map((h, i) => (
-              <div
-                key={i}
-                className="wave-bar"
-                style={{ height: `${h}px` }}
-              />
-            ))}
-          </div>
-
-          {/* Transcription */}
-          <div className="transcription-box">
-            <p className="transcription-text">
-              "I've been feeling a bit overwhelmed with work lately... it's hard to find a moment of peace."
-            </p>
-            <div className="transcription-label">
-              <span className="material-symbols-outlined">edit_note</span>
-              <span>REAL-TIME TRANSCRIPTION</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="controls-area">
-          <div className="main-controls">
-            <button className="ctrl-btn-sm" aria-label="Mute microphone">
-              <span className="material-symbols-outlined">mic</span>
-            </button>
-            <button className="ctrl-btn-end" aria-label="End session">
-              <span className="material-symbols-outlined">call_end</span>
-            </button>
-            <button className="ctrl-btn-sm" aria-label="Open chat">
-              <span className="material-symbols-outlined">chat_bubble</span>
-            </button>
-          </div>
-
-          <div className="bottom-bar">
-            <button className="sos-btn" aria-label="SOS Support">
-              <span className="material-symbols-outlined">emergency</span>
-              <span>S.O.S SUPPORT</span>
-            </button>
-
-            <div className="stability-wrap">
-              <div className="stability-info">
-                <span className="stability-label">Stability Level</span>
-                <div className="stability-bar-track">
-                  <div className="stability-bar-fill" />
-                </div>
-              </div>
-              <button className="settings-btn" aria-label="Settings">
-                <span className="material-symbols-outlined">settings</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Sidebar Nav */}
-      <aside className={`aise-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ icon, label, active, path }) => (
-            <a
-              key={label}
-              href={path}
-              className={`nav-item${active ? " active" : ""}`}
-              aria-label={label}
-            >
-              <span className="material-symbols-outlined">{icon}</span>
-              <span className="nav-label">{label}</span>
-            </a>
-          ))}
+        <nav className="flex flex-col gap-6">
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+            <span className="material-symbols-outlined text-[24px]">dashboard</span>
+            <span className="font-label-md text-label-md">Dashboard</span>
+          </a>
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+            <span className="material-symbols-outlined text-[24px]">mood</span>
+            <span className="font-label-md text-label-md">Mood</span>
+          </a>
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+            <span className="material-symbols-outlined text-[24px]">air</span>
+            <span className="font-label-md text-label-md">Breath</span>
+          </a>
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" href="#">
+            <span className="material-symbols-outlined text-[24px]">edit_note</span>
+            <span className="font-label-md text-label-md">Journal</span>
+          </a>
+          <a className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" href="#">
+            <span className="material-symbols-outlined text-[24px]">person</span>
+            <span className="font-label-md text-label-md">Me</span>
+          </a>
         </nav>
+        <div className="mt-auto">
+          <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors">
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="font-label-md text-label-md">Cerrar sesión</span>
+          </button>
+        </div>
       </aside>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && <div className="sidebar-overlay" onClick={toggleSidebar} />}
+      {/* Capa de Interfaz Principal */}
+      <div className="relative z-10 flex flex-col h-full px-container-padding-mobile md:px-container-padding-desktop py-10">
+        <header className="flex justify-between items-start w-full mb-auto">
+          <button
+            className="glass-button w-12 h-12 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary active:scale-95"
+            onClick={toggleSidebar}
+          >
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          <div className="text-center md:absolute md:left-1/2 md:-translate-x-1/2">
+            <h1 className="font-headline-md text-headline-md text-primary opacity-80 tracking-widest hidden md:block">A.I.S.E.</h1>
+            <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60 hidden md:block">Mindful Resonance</p>
+          </div>
+          <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors">
+            <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
+            <span className="font-label-md text-label-md">S.O.S.</span>
+          </button>
+        </header>
+
+        {/* Sección del Orbe y Voz */}
+        <main className="flex-1 flex flex-col items-center justify-center relative">
+          <div className="orb-container">
+            <div ref={glowRef} className="vibrating-orb"></div>
+            <div className="orb-ring"></div>
+            <div ref={orbRef} className="orb-inner flex items-center justify-center">
+              <div className="w-3 h-3 bg-primary/20 rounded-full animate-ping"></div>
+            </div>
+          </div>
+
+          <div className="mt-16 max-w-lg text-center px-4">
+            <p
+              className="font-body-lg text-body-lg-mobile md:text-body-lg text-neutral-custom/60 italic leading-relaxed transition-opacity duration-1000"
+              style={{ opacity: transcriptionOpacity }}
+            >
+              "{currentPhrase}"
+            </p>
+          </div>
+        </main>
+
+        <footer className="mt-auto flex justify-center pb-8">
+          <button className="glass-button flex items-center gap-3 px-8 py-4 rounded-full text-primary font-label-md text-label-md group hover:bg-primary/5">
+            <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">keyboard</span>
+            MODO TEXTO
+          </button>
+        </footer>
+      </div>
+
+      {/* Elementos Decorativos */}
+      <div className="fixed top-0 right-0 p-8 pointer-events-none opacity-20">
+        <div className="w-32 h-32 border-t border-r border-outline-variant rounded-tr-3xl"></div>
+      </div>
+      <div className="fixed bottom-0 left-0 p-8 pointer-events-none opacity-20">
+        <div className="w-32 h-32 border-b border-l border-outline-variant rounded-bl-3xl"></div>
+      </div>
     </div>
   );
-}
+};
+
+export default VoiceInterface;
