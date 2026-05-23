@@ -18,7 +18,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import "./crisisSoS.css";
+import "./CrisisSoS.css";
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
