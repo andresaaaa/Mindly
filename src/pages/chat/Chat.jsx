@@ -60,7 +60,7 @@ const VoiceInterface = () => {
             <span className="material-symbols-outlined text-[24px]">edit_note</span>
             <span className="font-label-md text-label-md">Journal</span>
           </button>
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
+          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" onClick={() => { toggleSidebar(); navigate('/configuracion'); }}>
             <span className="material-symbols-outlined text-[24px]">person</span>
             <span className="font-label-md text-label-md">Me</span>
           </button>

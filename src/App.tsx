@@ -10,6 +10,7 @@ import VoiceInterface from "./pages/chat/Chat.jsx";
 import Dashboard from "./pages/dahsboard/dashboard.jsx";
 import EmergencyMode from "./pages/s.o.s/canales_Atencion.jsx";
 import MemoryLane from "./pages/historial/memory_Line.jsx";
+import ProfileSettings from "./pages/configuracion/settings.jsx";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -23,8 +24,7 @@ const App = () => (
           <Route path="/chat" element={<VoiceInterface />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/historial" element={<MemoryLane />} />
-          {/* <Route path="/perfil" element={<Perfil />} /> */}
-          {/* <Route path="/configuracion" element={<Configuracion />} /> */}
+          <Route path="/configuracion" element={<ProfileSettings />} />
           <Route path="/sos" element={<EmergencyMode />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<Index />} />
