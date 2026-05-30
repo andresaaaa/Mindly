@@ -5,6 +5,13 @@ import { auth } from '../../firebaseConfig';
 import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
 
+const SIDEBAR_LINKS = [
+    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+    { icon: "mood", label: "Mood", route: "/chat", active: true },
+    { icon: "air", label: "Breath", route: "/sos" },
+    { icon: "edit_note", label: "Journal", route: "/historial" },
+    { icon: "person", label: "Me", route: "/configuracion" },
+];
 
 const VoiceInterface = () => {
   const navigate = useNavigate();
@@ -24,7 +31,9 @@ const VoiceInterface = () => {
     currentPhrase,
     transcriptionOpacity,
     orbRef,
-    glowRef
+    glowRef,
+    isTextMode,
+    toggleMode
   } = useVoiceLogic();
 
   return (
@@ -32,50 +41,62 @@ const VoiceInterface = () => {
       {/* Capa de fondo Aurora */}
       <div className="aurora-bg"></div>
 
-      {/* Overlay y Sidebar */}
+      {/* ── Sidebar Overlay ── */}
       <div
-        className={`sidebar-overlay fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity duration-400 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
         onClick={toggleSidebar}
-      ></div>
+        aria-hidden="true"
+      />
 
-      <aside className={`sidebar-transition fixed top-0 left-0 h-full w-72 bg-white/80 backdrop-blur-xl z-50 shadow-2xl border-r border-primary/10 px-8 py-12 flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="mb-12">
-          <h2 className="font-headline-md text-headline-md text-primary tracking-widest">A.I.S.E.</h2>
-          <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60">Mindful Resonance</p>
+      {/* ── Sidebar Drawer ── */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+        aria-label="Menú principal"
+      >
+        <div className="p-8 flex items-center space-x-3 border-b border-primary/10">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+            <circle cx="12" cy="12" r="5" fill="currentColor" />
+          </svg>
+          <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
         </div>
-        <nav className="flex flex-col gap-6">
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
-            <span className="material-symbols-outlined text-[24px]">dashboard</span>
-            <span className="font-label-md text-label-md">Dashboard</span>
-          </button>
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/dashboard'); }}>
-            <span className="material-symbols-outlined text-[24px]">mood</span>
-            <span className="font-label-md text-label-md">Mood</span>
-          </button>
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/sos'); }}>
-            <span className="material-symbols-outlined text-[24px]">air</span>
-            <span className="font-label-md text-label-md">Breath</span>
-          </button>
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group" onClick={() => { toggleSidebar(); navigate('/historial'); }}>
-            <span className="material-symbols-outlined text-[24px]">edit_note</span>
-            <span className="font-label-md text-label-md">Journal</span>
-          </button>
-          <button className="flex items-center gap-4 text-on-surface hover:text-primary transition-colors group mt-4" onClick={() => { toggleSidebar(); navigate('/configuracion'); }}>
-            <span className="material-symbols-outlined text-[24px]">person</span>
-            <span className="font-label-md text-label-md">Me</span>
-          </button>
+        <nav className="flex-1 py-8 px-4 space-y-2">
+          {SIDEBAR_LINKS.map((link) => (
+            <button
+              key={link.route}
+              onClick={() => { navigate(link.route); toggleSidebar(); }}
+              className={`w-full flex items-center space-x-4 p-4 rounded-full transition-colors group text-left ${link.active
+                ? "bg-primary/10 text-primary"
+                : "text-on-surface-variant hover:bg-primary/5"
+                }`}
+            >
+              <span className="material-icons-outlined group-hover:text-primary">{link.icon}</span>
+              <span className={`text-sm font-semibold ${link.active ? "font-bold" : ""}`}>{link.label}</span>
+            </button>
+          ))}
         </nav>
-        <div className="mt-auto">
-          <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors" onClick={handleLogout}>
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            <span className="font-label-md text-label-md">Cerrar sesión</span>
+        <div className="p-8 border-t border-primary/10 flex flex-col gap-6">
+          <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors px-4 py-2 text-left" onClick={handleLogout}>
+            <span className="material-icons-outlined text-[20px]">logout</span>
+            <span className="text-sm font-semibold">Cerrar sesión</span>
           </button>
+          <div className="flex items-center space-x-3 border-t border-primary/10 pt-6">
+            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-primary/20">
+              <span className="material-icons-outlined text-on-surface-variant">person</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-on-surface">Usuario</p>
+              <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* Capa de Interfaz Principal */}
       <div className="relative z-10 flex flex-col h-full px-container-padding-mobile md:px-container-padding-desktop py-10">
-        <header className="flex justify-between items-start w-full mb-auto">
+        <header className="flex justify-between items-start w-full mb-8 shrink-0">
           <button
             className="glass-button w-12 h-12 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary active:scale-95"
             onClick={toggleSidebar}
@@ -86,41 +107,128 @@ const VoiceInterface = () => {
             <h1 className="font-headline-md text-headline-md text-primary opacity-80 tracking-widest hidden md:block">A.I.S.E.</h1>
             <p className="font-label-sm text-label-sm uppercase tracking-[0.2em] text-neutral-custom/60 hidden md:block">Mindful Resonance</p>
           </div>
-          <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors" onClick={() => navigate('/sos')}>
-            <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
-            <span className="font-label-md text-label-md">S.O.S.</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {isTextMode && (
+              <button 
+                onClick={toggleMode}
+                className="glass-button w-12 h-12 flex md:hidden items-center justify-center rounded-full border-primary/20 text-primary hover:bg-primary/5 active:scale-95 transition-colors"
+                title="Modo Voz"
+              >
+                <span className="material-symbols-outlined">graphic_eq</span>
+              </button>
+            )}
+            <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors" onClick={() => navigate('/sos')}>
+              <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
+              <span className="font-label-md text-label-md">S.O.S.</span>
+            </button>
+          </div>
         </header>
 
-        {/* Sección del Orbe y Voz */}
-        <main className="flex-1 flex flex-col items-center justify-center relative">
-          <div className="orb-container">
-            <div ref={glowRef} className="vibrating-orb"></div>
-            <div className="orb-ring"></div>
-            <div ref={orbRef} className="orb-inner flex items-center justify-center">
-              <div className="w-3 h-3 bg-primary/20 rounded-full animate-ping"></div>
+        {/* Content Area Container */}
+        <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center">
+          
+          {/* Voice Mode Container */}
+          <main 
+            className={`mode-transition flex flex-col items-center justify-center w-full absolute inset-0 ${
+              isTextMode ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+            }`}
+          >
+            <div className="orb-container">
+              <div ref={glowRef} className="vibrating-orb"></div>
+              <div className="orb-ring"></div>
+              <div ref={orbRef} className="orb-inner flex items-center justify-center">
+                <div className="w-3 h-3 bg-primary/20 rounded-full animate-ping"></div>
+              </div>
             </div>
+
+            <div className="mt-16 max-w-lg text-center px-4">
+              <p
+                className="font-body-lg text-body-lg-mobile md:text-body-lg text-neutral-custom/60 italic leading-relaxed transition-opacity duration-1000"
+                style={{ opacity: transcriptionOpacity }}
+              >
+                "{currentPhrase}"
+              </p>
+            </div>
+          </main>
+
+          {/* Text Mode Container */}
+          <main 
+            className={`mode-transition flex flex-col w-full h-full max-w-2xl mx-auto absolute inset-0 ${
+              isTextMode ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-10'
+            }`}
+          >
+            {/* Mini Orb */}
+            <div className="flex justify-center mb-4 shrink-0">
+              <div className="w-16 h-16 relative">
+                <div className="vibrating-orb opacity-40"></div>
+                <div className="orb-inner flex items-center justify-center !w-full !h-full">
+                  <div className="w-1.5 h-1.5 bg-primary/20 rounded-full animate-ping"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 overflow-y-auto chat-scroll px-4 pb-4 space-y-6">
+              <div className="flex flex-col items-start max-w-[85%]">
+                <div className="glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant">
+                  Hola, estoy aquí para escucharte. ¿Quieres escribir lo que tienes en mente hoy?
+                </div>
+                <span className="text-label-sm text-neutral-custom/40 mt-2 ml-1">AISE • Ahora</span>
+              </div>
+              <div className="flex flex-col items-end max-w-[85%] ml-auto">
+                <div className="bg-primary/10 border border-primary/20 px-6 py-4 rounded-2xl rounded-tr-none text-body-md text-on-surface">
+                  Me siento un poco abrumado con el trabajo.
+                </div>
+                <span className="text-label-sm text-neutral-custom/40 mt-2 mr-1">Tú • Hace 1 min</span>
+              </div>
+              <div className="flex flex-col items-start max-w-[85%]">
+                <div className="glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant">
+                  Lamento que te sientas así. El trabajo puede ser una carga pesada. ¿Hay algo específico que te preocupe más en este momento?
+                </div>
+                <span className="text-label-sm text-neutral-custom/40 mt-2 ml-1">AISE • Ahora</span>
+              </div>
+            </div>
+          </main>
+        </div>
+
+        {/* Footer Area */}
+        <footer className="mt-8 flex flex-col items-center gap-6 shrink-0 pb-4">
+          
+          {/* Text Mode Input Container */}
+          <div 
+            className={`w-full max-w-2xl flex items-center gap-3 transition-all duration-500 overflow-hidden ${
+              isTextMode ? 'opacity-100 translate-y-0 h-14' : 'opacity-0 pointer-events-none translate-y-10 h-0 m-0'
+            }`}
+          >
+            <div className="relative flex-1">
+              <input 
+                className="w-full h-14 pl-6 pr-12 rounded-full border border-primary/20 bg-white/50 backdrop-blur-md focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none text-on-surface placeholder-neutral-custom/40 transition-all" 
+                placeholder="Escribe aquí tu mensaje..." 
+                type="text" 
+              />
+              <button className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/60 hover:text-primary transition-colors">
+                <span className="material-symbols-outlined">mic</span>
+              </button>
+            </div>
+            <button className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+              <span className="material-symbols-outlined">send</span>
+            </button>
           </div>
 
-          <div className="mt-16 max-w-lg text-center px-4">
-            <p
-              className="font-body-lg text-body-lg-mobile md:text-body-lg text-neutral-custom/60 italic leading-relaxed transition-opacity duration-1000"
-              style={{ opacity: transcriptionOpacity }}
-            >
-              "{currentPhrase}"
-            </p>
-          </div>
-        </main>
-
-        <footer className="mt-auto flex justify-center pb-8">
-          <button className="glass-button flex items-center gap-3 px-8 py-4 rounded-full text-primary font-label-md text-label-md group hover:bg-primary/5">
-            <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">keyboard</span>
-            MODO TEXTO
+          {/* Mode Toggle Button */}
+          <button 
+            onClick={toggleMode} 
+            className={`glass-button items-center gap-3 px-8 py-4 rounded-full text-primary font-label-md text-label-md group hover:bg-primary/5 ${isTextMode ? 'hidden md:flex' : 'flex'}`}
+          >
+            <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">
+              {isTextMode ? 'graphic_eq' : 'keyboard'}
+            </span>
+            <span>{isTextMode ? 'MODO VOZ' : 'MODO TEXTO'}</span>
           </button>
         </footer>
       </div>
 
-      {/* Elementos Decorativos */}
+      {/* Decorative Corner Elements */}
       <div className="fixed top-0 right-0 p-8 pointer-events-none opacity-20">
         <div className="w-32 h-32 border-t border-r border-outline-variant rounded-tr-3xl"></div>
       </div>

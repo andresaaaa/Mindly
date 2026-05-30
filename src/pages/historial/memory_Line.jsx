@@ -140,11 +140,11 @@ const PAGE_SIZE = 3;
 
 // ─── Sidebar links ────────────────────────────────────────────────────────────
 const SIDEBAR_LINKS = [
-    { icon: "dashboard", label: "Dashboard", route: "dashboard" },
-    { icon: "mood", label: "Mood", route: "mood" },
-    { icon: "air", label: "Breath", route: "breath" },
-    { icon: "edit_note", label: "Journal", route: "journal", active: true },
-    { icon: "person", label: "Me", route: "me" },
+    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+    { icon: "mood", label: "Mood", route: "/chat" },
+    { icon: "air", label: "Breath", route: "/sos" },
+    { icon: "edit_note", label: "Journal", route: "/historial", active: true },
+    { icon: "person", label: "Me", route: "/configuracion" },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -312,8 +312,8 @@ function SessionModal({ session, onClose }) {
 export default function MemoryLane({
     sessions: propSessions,
     userName = "Usuario",
-    onNavigate,
 }) {
+    const navigate = useNavigate();
     const sessions = propSessions ?? ALL_SESSIONS;
 
     // ── Estado ──────────────────────────────────────────────────────────────
@@ -412,7 +412,7 @@ export default function MemoryLane({
                     {SIDEBAR_LINKS.map((link) => (
                         <button
                             key={link.route}
-                            onClick={() => { onNavigate?.(link.route); closeSidebar(); }}
+                            onClick={() => { navigate(link.route); closeSidebar(); }}
                             className={`w-full flex items-center space-x-4 p-4 rounded-full transition-colors group text-left ${link.active
                                 ? "bg-primary/10 text-primary"
                                 : "text-on-surface-variant hover:bg-primary/5"
@@ -449,7 +449,7 @@ export default function MemoryLane({
                     </button>
                     <button
                         className="flex items-center gap-2"
-                        onClick={() => onNavigate?.("home")}
+                        onClick={() => navigate('/dashboard')}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />

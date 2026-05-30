@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import './settings_style.css';
 
 
@@ -138,8 +139,17 @@ function AddContactModal({ onClose, onAdd }) {
     );
 }
 
+const SIDEBAR_LINKS = [
+    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+    { icon: "mood", label: "Mood", route: "/chat" },
+    { icon: "air", label: "Breath", route: "/sos" },
+    { icon: "edit_note", label: "Journal", route: "/historial" },
+    { icon: "person", label: "Me", route: "/configuracion", active: true },
+];
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function ProfileSettings() {
+    const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [voicePersona, setVoicePersona] = useState("Calm");
     const [frequency, setFrequency] = useState(3);
@@ -155,9 +165,19 @@ export default function ProfileSettings() {
     const [toast, setToast] = useState({ message: "", visible: false });
     const toastTimer = useRef(null);
 
+    const openSidebar = () => setSidebarOpen(true);
+    const closeSidebar = () => setSidebarOpen(false);
+
+    useEffect(() => {
+        const handleKey = (e) => { if (e.key === "Escape") closeSidebar(); };
+        document.addEventListener("keydown", handleKey);
+        return () => document.removeEventListener("keydown", handleKey);
+    }, []);
+
     // Lock scroll when sidebar open
     useEffect(() => {
         document.body.style.overflow = sidebarOpen ? "hidden" : "";
+        return () => { document.body.style.overflow = ""; };
     }, [sidebarOpen]);
 
     const showToast = (msg) => {
@@ -181,62 +201,90 @@ export default function ProfileSettings() {
 
     const frequencyLabel = `${frequency} ${frequency === 1 ? "time" : "times"} / day`;
 
-    const navItems = [
-        { icon: "dashboard", label: "Dashboard" },
-        { icon: "mood", label: "Mood" },
-        { icon: "air", label: "Breath" },
-        { icon: "edit_note", label: "Journal" },
-        { icon: "person", label: "Me", active: true },
-    ];
-
     return (
         <div
             className="aurora-gradient"
             style={{ minHeight: "100vh", fontFamily: "Montserrat, sans-serif", background: "var(--color-background)" }}
         >
-            {/* Sidebar Overlay */}
-            <div className={"sidebar-overlay" + (sidebarOpen ? " open" : "")} onClick={() => setSidebarOpen(false)} />
+            {/* ── Sidebar Overlay ── */}
+            <div
+                className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                    }`}
+                onClick={closeSidebar}
+                aria-hidden="true"
+            />
 
-            {/* Sidebar */}
-            <aside className={"sidebar" + (sidebarOpen ? " open" : "")}>
-                <div style={{ padding: 24, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(211,194,201,0.2)" }}>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-primary)", fontFamily: "Montserrat, sans-serif" }}>Mindly</div>
-                    <button
-                        onClick={() => setSidebarOpen(false)}
-                        style={{ padding: 8, background: "none", border: "none", cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center" }}
-                    >
-                        <span className="material-symbols-outlined" style={{ color: "var(--color-on-surface)" }}>close</span>
-                    </button>
+            {/* ── Sidebar Drawer ── */}
+            <aside
+                className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
+                aria-label="Menú principal"
+            >
+                <div className="p-8 flex items-center space-x-3 border-b border-primary/10">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+                        <circle cx="12" cy="12" r="5" fill="currentColor" />
+                    </svg>
+                    <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
                 </div>
-                <nav style={{ flex: 1, padding: "32px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                    {navItems.map(({ icon, label, active }) => (
-                        <a key={label} href="#" className={"nav-link" + (active ? " active" : "")} onClick={e => e.preventDefault()}>
-                            <span className="material-symbols-outlined">{icon}</span>
-                            {label}
-                        </a>
+                <nav className="flex-1 py-8 px-4 space-y-2">
+                    {SIDEBAR_LINKS.map((link) => (
+                        <button
+                            key={link.route}
+                            onClick={() => { navigate(link.route); closeSidebar(); }}
+                            className={`w-full flex items-center space-x-4 p-4 rounded-full transition-colors group text-left ${link.active
+                                ? "bg-primary/10 text-primary"
+                                : "text-on-surface-variant hover:bg-primary/5"
+                                }`}
+                        >
+                            <span className="material-icons-outlined group-hover:text-primary">{link.icon}</span>
+                            <span className={`text-sm font-semibold ${link.active ? "font-bold" : ""}`}>{link.label}</span>
+                        </button>
                     ))}
                 </nav>
-                <div style={{ padding: 24, borderTop: "1px solid rgba(211,194,201,0.2)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--color-primary-container)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-on-primary-container)", fontWeight: 700, flexShrink: 0 }}>ER</div>
+                <div className="p-8 border-t border-primary/10">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-primary/20">
+                            <span className="material-icons-outlined text-on-surface-variant">person</span>
+                        </div>
                         <div>
-                            <p style={{ fontSize: 14, fontWeight: 700, color: "var(--color-on-surface)" }}>Elena R.</p>
-                            <p style={{ fontSize: 12, color: "var(--color-on-surface-variant)" }}>Premium User</p>
+                            <p className="text-sm font-semibold text-on-surface">Usuario</p>
+                            <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
                         </div>
                     </div>
                 </div>
             </aside>
 
-            {/* Top Nav */}
-            <header style={{ background: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)", position: "fixed", top: 0, width: "100%", zIndex: 50 }}>
-                <div style={{ display: "flex", alignItems: "center", padding: "16px 24px", maxWidth: 1280, margin: "0 auto" }}>
+            {/* ── Header ── */}
+            <header className="h-16 flex items-center justify-between px-4 md:px-8 lg:px-12 sticky top-0 z-50"
+                style={{ backgroundColor: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)" }}>
+                <div className="flex items-center gap-4">
                     <button
-                        onClick={() => setSidebarOpen(true)}
-                        style={{ padding: 8, marginLeft: -8, marginRight: 16, background: "none", border: "none", cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center" }}
+                        className="p-2 hover:bg-surface-container rounded-full transition-colors"
+                        onClick={openSidebar}
+                        aria-label="Abrir menú"
                     >
-                        <span className="material-symbols-outlined" style={{ color: "var(--color-on-surface-variant)" }}>menu</span>
+                        <span className="material-icons-outlined">menu</span>
                     </button>
-                    <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-primary)", fontFamily: "Montserrat, sans-serif" }}>Mindly</div>
+                    <button
+                        className="flex items-center gap-2"
+                        onClick={() => navigate('/dashboard')}
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+                            <circle cx="12" cy="12" r="5" fill="currentColor" />
+                        </svg>
+                        <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
+                    </button>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button className="p-2 hover:bg-surface-container rounded-full transition-colors relative" aria-label="Notificaciones">
+                        <span className="material-icons-outlined">notifications</span>
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+                    </button>
+                    <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-primary/20 flex items-center justify-center">
+                        <span className="material-icons-outlined text-on-surface-variant">person</span>
+                    </div>
                 </div>
             </header>
 

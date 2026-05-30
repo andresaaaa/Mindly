@@ -40,19 +40,19 @@ const RESOURCES = [
 
 /** Rutas del sidebar */
 const SIDEBAR_LINKS = [
-  { icon: "dashboard", label: "Dashboard", route: "dashboard", active: false },
-  { icon: "mood", label: "Mood", route: "mood", active: false },
-  { icon: "air", label: "Breath", route: "breath", active: true, filled: true },
-  { icon: "edit_note", label: "Journal", route: "journal", active: false },
-  { icon: "person", label: "Me", route: "me", active: false },
+  { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+  { icon: "mood", label: "Mood", route: "/chat" },
+  { icon: "air", label: "Breath", route: "/sos", active: true },
+  { icon: "edit_note", label: "Journal", route: "/historial" },
+  { icon: "person", label: "Me", route: "/configuracion" },
 ];
 
 /** Rutas del bottom nav (móvil) */
 const BOTTOM_NAV = [
-  { icon: "dashboard", label: "Dashboard", route: "dashboard" },
-  { icon: "bubble_chart", label: "Mindly AI", route: "ai" },
-  { icon: "history", label: "History", route: "history" },
-  { icon: "emergency_home", label: "SOS", route: "sos", active: true, filled: true },
+  { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
+  { icon: "bubble_chart", label: "Mindly AI", route: "/chat" },
+  { icon: "history", label: "History", route: "/historial" },
+  { icon: "emergency_home", label: "SOS", route: "/sos", active: true },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -106,8 +106,8 @@ export default function EmergencyMode({
   trustedContact = { name: "Contacto de Confianza", phone: "tel:+1234567890" },
   onCallEmergency,
   onCallContact,
-  onNavigate,
 }) {
+  const navigate = useNavigate();
   // ── Estado del sidebar ──────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -218,102 +218,83 @@ export default function EmergencyMode({
 
       {/* ── Sidebar Drawer ── */}
       <aside
-        id="sidebar"
-        className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-outline-variant/30 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         aria-label="Menú principal"
       >
-        {/* Logo */}
-        <div className="p-8 flex items-center space-x-3 border-b border-outline-variant/20">
-          <span className="material-symbols-outlined text-primary text-3xl">psychology</span>
-          <span className="font-headline-sm text-primary font-bold">Mindly</span>
+        <div className="p-8 flex items-center space-x-3 border-b border-primary/10">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+            <circle cx="12" cy="12" r="5" fill="currentColor" />
+          </svg>
+          <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
         </div>
-
-        {/* Nav links */}
         <nav className="flex-1 py-8 px-4 space-y-2">
           {SIDEBAR_LINKS.map((link) => (
             <button
               key={link.route}
-              onClick={() => { onNavigate?.(link.route); closeSidebar(); }}
+              onClick={() => { navigate(link.route); closeSidebar(); }}
               className={`w-full flex items-center space-x-4 p-4 rounded-full transition-colors group text-left ${link.active
-                ? "bg-primary-container/20 text-primary"
-                : "text-on-surface-variant hover:bg-primary-container/10"
+                ? "bg-primary/10 text-primary"
+                : "text-on-surface-variant hover:bg-primary/5"
                 }`}
             >
-              <span
-                className="material-symbols-outlined group-hover:text-primary"
-                style={link.filled ? { fontVariationSettings: "'FILL' 1" } : {}}
-              >
-                {link.icon}
-              </span>
-              <span className={`font-label-md ${link.active ? "font-bold" : ""}`}>{link.label}</span>
+              <span className="material-icons-outlined group-hover:text-primary">{link.icon}</span>
+              <span className={`text-sm font-semibold ${link.active ? "font-bold" : ""}`}>{link.label}</span>
             </button>
           ))}
         </nav>
-
-        {/* User info */}
-        <div className="p-8 border-t border-outline-variant/20">
+        <div className="p-8 border-t border-primary/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant">
-              <span className="material-symbols-outlined text-on-surface-variant">person</span>
+            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-primary/20">
+              <span className="material-icons-outlined text-on-surface-variant">person</span>
             </div>
             <div>
-              <p className="font-label-md text-on-surface">{userName}</p>
+              <p className="text-sm font-semibold text-on-surface">{userName}</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* ── TopNavBar ── */}
-      <header className="sticky top-0 w-full z-50 bg-surface/80 backdrop-blur-lg border-b border-outline-variant/20">
-        <nav className="flex justify-between items-center w-full px-container-padding-mobile md:px-container-padding-desktop max-w-7xl mx-auto h-16">
-          {/* Left: menu + logo */}
-          <div className="flex items-center space-x-4">
-            <button
-              aria-label="Abrir menú"
-              className="p-2 hover:bg-surface-container rounded-full transition-colors"
-              onClick={openSidebar}
-            >
-              <span className="material-symbols-outlined text-on-surface-variant">menu</span>
-            </button>
-            <div className="flex items-center space-x-2">
-              <span className="material-symbols-outlined text-primary text-2xl">psychology</span>
-              <span className="font-headline-sm text-headline-sm font-bold text-primary">Mindly</span>
-            </div>
+      {/* ── Header ── */}
+      <header className="h-16 flex items-center justify-between px-4 md:px-8 lg:px-12 sticky top-0 z-50 animate-fade-down"
+        style={{ backgroundColor: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(220,200,210,0.3)" }}>
+        <div className="flex items-center gap-4">
+          <button
+            className="p-2 hover:bg-surface-container rounded-full transition-colors"
+            onClick={openSidebar}
+            aria-label="Abrir menú"
+          >
+            <span className="material-icons-outlined">menu</span>
+          </button>
+          <button
+            className="flex items-center gap-2"
+            onClick={() => navigate('/dashboard')}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+              <circle cx="12" cy="12" r="5" fill="currentColor" />
+            </svg>
+            <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
+          </button>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Timer de sesión */}
+          <span
+            className="hidden sm:inline text-xs font-medium text-on-surface-variant tracking-wider tabular-nums mr-2"
+            title="Tiempo en modo emergencia"
+          >
+            {formatTime(sessionSeconds)}
+          </span>
+          <button className="p-2 hover:bg-surface-container rounded-full transition-colors relative" aria-label="Notificaciones">
+            <span className="material-icons-outlined">notifications</span>
+            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+          </button>
+          <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-primary/20 flex items-center justify-center">
+            <span className="material-icons-outlined text-on-surface-variant">person</span>
           </div>
-
-          {/* Right: session timer + icons + avatar */}
-          <div className="flex items-center space-x-4">
-            {/* Timer de sesión */}
-            <span
-              className="hidden sm:inline font-label-sm text-label-sm text-outline tabular-nums"
-              title="Tiempo en modo emergencia"
-            >
-              {formatTime(sessionSeconds)}
-            </span>
-
-            <button
-              className="p-2 text-on-surface-variant hover:text-primary transition-colors"
-              aria-label="Sensores"
-            >
-              <span className="material-symbols-outlined">sensors</span>
-            </button>
-            <button
-              className="p-2 text-on-surface-variant hover:text-primary transition-colors"
-              aria-label="Notificaciones"
-            >
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-
-            {/* Avatar */}
-            <div className="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden">
-              <div className="w-full h-full bg-primary-container flex items-center justify-center">
-                <span className="material-symbols-outlined text-on-primary-container text-sm">person</span>
-              </div>
-            </div>
-          </div>
-        </nav>
+        </div>
       </header>
 
       {/* ── Main content ── */}

@@ -7,7 +7,7 @@ import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import LoginForm from "./pages/login/login.jsx";
 import VoiceInterface from "./pages/chat/Chat.jsx";
-import Dashboard from "./pages/dahsboard/dashboard.jsx";
+import MindlyDashboard from "./pages/dahsboard/dashboard.jsx";
 import EmergencyMode from "./pages/s.o.s/canales_Atencion.jsx";
 import MemoryLane from "./pages/historial/memory_Line.jsx";
 import ProfileSettings from "./pages/configuracion/settings.jsx";
@@ -22,7 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/chat" element={<VoiceInterface />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<MindlyDashboard />} />
           <Route path="/historial" element={<MemoryLane />} />
           <Route path="/configuracion" element={<ProfileSettings />} />
           <Route path="/sos" element={<EmergencyMode />} />

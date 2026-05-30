@@ -1,264 +1,480 @@
-import React from 'react';
-import { useDashboardLogic } from '../../backend/dashboard_logic.js';
-import './dashboard_style.css';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
-const Dashboard = () => {
-    const {
-        isSidebarOpen,
-        toggleSidebar,
-        activeNavItem,
-        setActiveNavItem,
-        setIsHoveringAise
-    } = useDashboardLogic();
+import "./dashboard_style.css";
+
+/* ─── DATOS ─── */
+const MOODS = [
+    { emoji: "😊", label: "Feliz" },
+    { emoji: "😌", label: "Tranquilo" },
+    { emoji: "😐", label: "Neutral" },
+    { emoji: "😔", label: "Triste" },
+    { emoji: "😰", label: "Ansioso" },
+];
+
+// Semana actual simplificada
+const TODAY = 22;
+const CHECKED_DAYS = [4, 5, 6, 10, 11, 12, 13, 14, 19, 20, 21, TODAY];
+const MONTH_DAYS = Array.from({ length: 30 }, (_, i) => i + 1);
+const DAY_LABELS = ["L", "L", "M", "J", "V", "S", "D"];
+
+const COMMUNITY_USERS = [
+    { seed: "Ana", online: true },
+    { seed: "Carlos", online: true },
+    { seed: "Sofia", online: true },
+    { seed: "Marco", online: true },
+    { seed: "Lucia", online: true },
+];
+
+const SIDEBAR_LINKS = [
+    { icon: "dashboard", label: "Dashboard", route: "/dashboard", active: true },
+    { icon: "mood", label: "Mood", route: "/chat" },
+    { icon: "air", label: "Breath", route: "/sos" },
+    { icon: "edit_note", label: "Journal", route: "/historial" },
+    { icon: "person", label: "Me", route: "/configuracion" },
+];
+
+/* ─── COMPONENTE ─── */
+export default function MindlyDashboard() {
+    const navigate = useNavigate();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [selectedMood, setSelectedMood] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioProgress, setAudioProgress] = useState(38);
+    const [currentMonth, setCurrentMonth] = useState("Icvana 2024");
+    const intervalRef = useRef(null);
+
+    const openSidebar = () => setSidebarOpen(true);
+    const closeSidebar = () => setSidebarOpen(false);
+
+    useEffect(() => {
+        const handleKey = (e) => { if (e.key === "Escape") closeSidebar(); };
+        document.addEventListener("keydown", handleKey);
+        return () => document.removeEventListener("keydown", handleKey);
+    }, []);
+
+    useEffect(() => {
+        document.body.style.overflow = sidebarOpen ? "hidden" : "";
+        return () => { document.body.style.overflow = ""; };
+    }, [sidebarOpen]);
+
+
+
+    useEffect(() => {
+        if (isPlaying) {
+            intervalRef.current = setInterval(() => {
+                setAudioProgress(p => p >= 100 ? 0 : p + 0.4);
+            }, 200);
+        } else {
+            clearInterval(intervalRef.current);
+        }
+        return () => clearInterval(intervalRef.current);
+    }, [isPlaying]);
+
+    const pct = `${audioProgress.toFixed(0)}%`;
 
     return (
-        <div className="font-body-md text-on-surface min-h-screen relative overflow-x-hidden">
-            <div className="aurora-bg"></div>
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#fdf6f8" }}>
 
-            {/* Sidebar Overlay */}
+            {/* ── Sidebar Overlay ── */}
             <div
-                className={`fixed inset-0 bg-black/20 z-[60] backdrop-blur-sm transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-                onClick={toggleSidebar}
-            ></div>
+                className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                    }`}
+                onClick={closeSidebar}
+                aria-hidden="true"
+            />
 
-            {/* Vertical Sidebar (Drawer) */}
+            {/* ── Sidebar Drawer ── */}
             <aside
-                className={`fixed top-0 left-0 h-full w-72 bg-white/95 backdrop-blur-xl z-[70] shadow-2xl flex flex-col p-8 border-r border-outline-variant/20 transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                    }`}
+                aria-label="Menú principal"
             >
-                <div className="flex items-center gap-3 mb-12">
-                    <span className="material-symbols-outlined text-primary text-3xl">settings_heart</span>
-                    <div className="font-headline-md text-headline-sm font-bold text-primary">Mindly</div>
+                <div className="p-8 flex items-center space-x-3 border-b border-primary/10">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+                        <circle cx="12" cy="12" r="5" fill="currentColor" />
+                    </svg>
+                    <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
                 </div>
-
-                <nav className="flex flex-col gap-2">
-                    <button className="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary-container/30 text-primary font-label-md w-full text-left">
-                        <span className="material-symbols-outlined">dashboard</span>
-                        Dashboard
-                    </button>
-                    <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors font-label-md w-full text-left">
-                        <span className="material-symbols-outlined">mood</span>
-                        Mood
-                    </button>
-                    <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors font-label-md w-full text-left">
-                        <span className="material-symbols-outlined">air</span>
-                        Breath
-                    </button>
-                    <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors font-label-md w-full text-left">
-                        <span className="material-symbols-outlined">edit_note</span>
-                        Journal
-                    </button>
-                    <button className="flex items-center gap-4 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container transition-colors font-label-md w-full text-left">
-                        <span className="material-symbols-outlined">person</span>
-                        Me
-                    </button>
+                <nav className="flex-1 py-8 px-4 space-y-2">
+                    {SIDEBAR_LINKS.map((link) => (
+                        <button
+                            key={link.route}
+                            onClick={() => { navigate(link.route); closeSidebar(); }}
+                            className={`w-full flex items-center space-x-4 p-4 rounded-full transition-colors group text-left ${link.active
+                                ? "bg-primary/10 text-primary"
+                                : "text-on-surface-variant hover:bg-primary/5"
+                                }`}
+                        >
+                            <span className="material-icons-outlined group-hover:text-primary">{link.icon}</span>
+                            <span className={`text-sm font-semibold ${link.active ? "font-bold" : ""}`}>{link.label}</span>
+                        </button>
+                    ))}
                 </nav>
-
-                <div className="mt-auto pt-8 border-t border-outline-variant/20">
-                    <button className="flex items-center gap-4 px-4 py-3 w-full rounded-xl text-error hover:bg-error-container/20 transition-colors font-label-md">
-                        <span className="material-symbols-outlined">logout</span>
-                        Salir
-                    </button>
+                <div className="p-8 border-t border-primary/10">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-primary/20">
+                            <span className="material-icons-outlined text-on-surface-variant">person</span>
+                        </div>
+                        <div>
+                            <p className="text-sm font-semibold text-on-surface">Usuario</p>
+                            <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
+                        </div>
+                    </div>
                 </div>
             </aside>
 
-            {/* Top Bar */}
-            <header className="sticky top-0 w-full z-50" style={{ backgroundColor: '#FFFFFF' }}>
-                <nav className="flex justify-between items-center w-full px-4 md:px-10 h-16">
-                    <div className="flex items-center gap-6">
-                        <button aria-label="Menu" className="p-2 -ml-2 rounded-full hover:bg-surface-container transition-colors" onClick={toggleSidebar}>
-                            <span className="material-symbols-outlined text-on-surface-variant text-2xl">menu</span>
-                        </button>
-                        <div className="font-headline-md text-headline-sm font-bold text-primary">Mindly</div>
+            {/* ── Header ── */}
+            <header className="h-16 flex items-center justify-between px-4 md:px-8 lg:px-12 sticky top-0 z-50"
+                style={{ backgroundColor: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)" }}>
+                <div className="flex items-center gap-4">
+                    <button
+                        className="p-2 hover:bg-surface-container rounded-full transition-colors"
+                        onClick={openSidebar}
+                        aria-label="Abrir menú"
+                    >
+                        <span className="material-icons-outlined">menu</span>
+                    </button>
+                    <button
+                        className="flex items-center gap-2"
+                        onClick={() => navigate('/dashboard')}
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
+                            <circle cx="12" cy="12" r="5" fill="currentColor" />
+                        </svg>
+                        <span className="text-xl font-bold tracking-tight text-neutral">Mindly</span>
+                    </button>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button className="p-2 hover:bg-surface-container rounded-full transition-colors relative" aria-label="Notificaciones">
+                        <span className="material-icons-outlined">notifications</span>
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+                    </button>
+                    <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-primary/20 flex items-center justify-center">
+                        <span className="material-icons-outlined text-on-surface-variant">person</span>
                     </div>
-                    <div className="flex items-center gap-4 md:gap-6">
-                        <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors hidden sm:block">location_on</span>
-                        <span className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 cursor-pointer hover:border-primary transition-colors">
-                            <img alt="User Profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/a/ACg8ocL8Zz3W0W9h1L0J9L3l3v4X5Z0W=s96-c" />
-                        </div>
-                    </div>
-                </nav>
+                </div>
             </header>
 
-            <main className="mx-auto px-5 md:px-10 py-12 pb-32">
-                {/* Hero Waveform Interaction */}
-                <section className="flex flex-col items-center justify-center mb-12 relative">
-                    <div className="absolute -z-10 w-full h-full flex items-center justify-center opacity-20 pointer-events-none">
-                        <div className="w-[400px] h-[400px] rounded-full primary-gradient-btn blur-[100px] pulse-slow"></div>
+            {/* ── MAIN ── */}
+            <main style={{ flex: 1, maxWidth: 1600, margin: "0 auto", padding: "16px 32px", width: "100%" }}>
+
+                {/* ROW 1: Mood + Calendario */}
+                <div className="dashboard-grid-top">
+
+                    {/* Mood Card */}
+                    <div className="mly-card fade-up d1" style={{
+                        background: "linear-gradient(135deg, #fff0f6 0%, #f0f9ff 100%)",
+                        display: "flex", flexDirection: "column", alignItems: "center",
+                        justifyContent: "center", padding: "36px 32px", gap: 20,
+                    }}>
+                        <h2 style={{ fontSize: 26, fontWeight: 700, color: "#2d1b2e", textAlign: "center" }}>
+                            Hola, ¿cómo te sientes?
+                        </h2>
+
+                        {/* Emojis */}
+                        <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+                            {MOODS.map((m, i) => (
+                                <button
+                                    key={m.label}
+                                    className={`mood-btn${selectedMood === i ? " selected" : ""}`}
+                                    onClick={() => setSelectedMood(i)}
+                                    title={m.label}
+                                >
+                                    {m.emoji}
+                                </button>
+                            ))}
+                        </div>
+
+                        <p style={{ color: "#82737a", fontSize: 14 }}>
+                            {selectedMood !== null
+                                ? `Seleccionaste: ${MOODS[selectedMood].label} ${MOODS[selectedMood].emoji}`
+                                : "Selecciona tu estado de ánimo"}
+                        </p>
                     </div>
 
-                    <div className="text-center mb-10">
-                        <h1 className="font-headline-lg text-[32px] md:text-[48px] mb-4 text-on-surface font-bold leading-tight">Hola, ¿cómo te sientes?</h1>
-                        <p className="font-body-lg text-body-lg text-on-surface-variant max-w-lg mx-auto">AISE está aquí para escucharte y guiarte hacia un estado de calma total.</p>
-                    </div>
-
-                    {/* Animated AISE Button */}
-                    <button
-                        className="group relative flex flex-col items-center justify-center active:scale-95 transition-all duration-500"
-                        onMouseEnter={() => setIsHoveringAise(true)}
-                        onMouseLeave={() => setIsHoveringAise(false)}
-                    >
-                        <div className="absolute inset-0 primary-gradient-btn blur-2xl opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
-                        <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-full primary-gradient-btn flex flex-col items-center justify-center text-white p-8 shadow-2xl overflow-hidden">
-                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            <span className="material-symbols-outlined text-5xl mb-3 wave-animation" style={{ fontVariationSettings: "'FILL' 1" }}>bubble_chart</span>
-                            <span className="font-label-md text-label-md text-center leading-tight tracking-wider">INICIAR CONVERSACIÓN<br />(A.I.S.E.)</span>
-
-                            <div className="absolute bottom-0 left-0 w-full h-12 flex items-end justify-around px-4 opacity-40">
-                                <div className="w-1 bg-white rounded-full animate-[bounce_1.2s_infinite]"></div>
-                                <div className="w-1 bg-white rounded-full animate-[bounce_0.8s_infinite]"></div>
-                                <div className="w-1 bg-white rounded-full animate-[bounce_1.5s_infinite]"></div>
-                                <div className="w-1 bg-white rounded-full animate-[bounce_1s_infinite]"></div>
-                                <div className="w-1 bg-white rounded-full animate-[bounce_1.3s_infinite]"></div>
+                    {/* Calendario */}
+                    <div className="mly-card fade-up d2">
+                        {/* Header calendario */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                            <div style={{
+                                width: 36, height: 36, borderRadius: "50%",
+                                background: "#f5edf2", display: "flex", alignItems: "center", justifyContent: "center"
+                            }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#844c70" strokeWidth="2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p style={{ fontWeight: 700, fontSize: 15, color: "#2d1b2e", lineHeight: 1.2 }}>Racha de</p>
+                                <p style={{ fontWeight: 700, fontSize: 15, color: "#2d1b2e" }}>Meditación</p>
                             </div>
                         </div>
-                    </button>
-                </section>
 
-                {/* Bento Grid Widgets */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-                    {/* Left Column */}
-                    <div className="lg:col-span-4 space-y-8">
-                        <div className="glass-card rounded-xl p-8 transition-transform hover:scale-[1.02] duration-300">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="font-headline-md text-[24px] font-semibold">Estado de Ánimo Hoy</h2>
-                                <span className="material-symbols-outlined text-primary">sentiment_satisfied</span>
-                            </div>
-                            <div className="flex items-center gap-6 mb-6">
-                                <div className="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center text-3xl">😌</div>
-                                <div>
-                                    <div className="font-label-md text-[14px] font-semibold text-on-secondary-container">Sereno</div>
-                                    <div className="text-sm text-on-surface-variant">8:30 AM</div>
-                                </div>
-                            </div>
-                            <p className="text-on-surface-variant font-body-md bg-surface-container-low p-4 rounded-lg">
-                                "Pareces estar en un estado de calma receptiva. Es un gran momento para una meditación breve de enfoque."
-                            </p>
+                        {/* Nav mes */}
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#82737a", fontSize: 16 }}>‹</button>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: "#3d2b36" }}>{currentMonth}</span>
+                            <button style={{ background: "none", border: "none", cursor: "pointer", color: "#82737a", fontSize: 16 }}>›</button>
                         </div>
 
-                        <div className="glass-card rounded-xl p-8 transition-transform hover:scale-[1.02] duration-300 overflow-hidden">
-                            <h2 className="font-headline-md text-[24px] font-semibold mb-6">Progreso Emocional</h2>
-                            <div className="relative h-40 w-full flex items-end justify-between gap-2 px-2">
-                                <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                                    <span className="material-symbols-outlined text-9xl text-primary">show_chart</span>
-                                </div>
-                                <div className="h-[40%] w-3 bg-primary-container rounded-full"></div>
-                                <div className="h-[60%] w-3 bg-secondary-container rounded-full"></div>
-                                <div className="h-[85%] w-3 bg-primary-container rounded-full"></div>
-                                <div className="h-[70%] w-3 bg-secondary-container rounded-full"></div>
-                                <div className="h-[95%] w-3 bg-primary-container rounded-full"></div>
-                                <div className="h-[50%] w-3 bg-secondary-container rounded-full"></div>
-                                <div className="h-[80%] w-3 bg-primary-container rounded-full"></div>
-                            </div>
-                            <div className="flex justify-between mt-4 text-[10px] font-label-md text-on-surface-variant uppercase tracking-widest">
-                                <span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
-                            </div>
-                            <div className="mt-6 flex gap-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-primary-container"></div>
-                                    <span className="text-xs font-label-md font-semibold">Calma</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-secondary-container"></div>
-                                    <span className="text-xs font-label-md font-semibold">Energía</span>
-                                </div>
-                            </div>
+                        {/* Labels días */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+                            {DAY_LABELS.map((d, i) => (
+                                <div key={i} style={{ textAlign: "center", fontSize: 11, color: "#82737a", fontWeight: 600, padding: "2px 0" }}>{d}</div>
+                            ))}
+                        </div>
+
+                        {/* Días — offset 2 para que empiece en miércoles como la imagen */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+                            {Array.from({ length: 2 }).map((_, i) => <div key={`e${i}`} />)}
+                            {MONTH_DAYS.map(day => {
+                                const isChecked = CHECKED_DAYS.includes(day);
+                                const isToday = day === TODAY;
+                                return (
+                                    <div
+                                        key={day}
+                                        className={`cal-day${isChecked ? " checked" : ""}${isToday ? " today" : ""}`}
+                                        style={{ margin: "0 auto" }}
+                                    >
+                                        {isChecked
+                                            ? <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" /></svg>
+                                            : day}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Racha */}
+                        <div style={{ textAlign: "center", marginTop: 12 }}>
+                            <span style={{
+                                fontSize: 13, fontWeight: 700, color: "#844c70",
+                                background: "#f5edf2", padding: "4px 16px", borderRadius: 9999,
+                            }}>
+                                5 Dias Seguidos
+                            </span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Center Column */}
-                    <div className="hidden lg:flex lg:col-span-4 h-full items-center justify-center">
-                        <div className="relative w-full aspect-square rounded-full border-2 border-dashed border-outline-variant/30 flex items-center justify-center">
-                            <img alt="Mindful abstract" className="w-4/5 h-4/5 object-cover rounded-full opacity-60 mix-blend-multiply grayscale hover:grayscale-0 transition-all duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLsPz930M9TknK_utFx8jy5PPjKIeYOitQ6EpktCfMI6JKy94zui9eoozOf3Cr3Hfj2il4359x05RYUyS4f_ZFNPKbN_ly6zQO6Qs14Lg_GWj80h7wB5IoPhgrD146zq1Da9zwVssmxr1phM9auo2ZFOUjDrXZG11Vzc1SrzkVLChw7-9lY-3_9KyBcFVsJzKo_piCsYpAkUc9w4t_G46Ih1O7evox7onoMZBWV1V-KM8XSU2Fc9SZbZYFU0ADGqGQfJCiPnJMhUg" />
+                {/* ROW 2: Tu Viaje (barra de niveles) */}
+                <div className="mly-card fade-up d3" style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#2d1b2e" }}>Tu Viaje</h3>
+                        <span style={{ fontSize: 13, color: "#82737a", fontWeight: 500 }}>70% Completado</span>
+                    </div>
+
+                    {/* Barra con tooltip */}
+                    <div style={{ position: "relative", marginBottom: 12 }}>
+                        {/* Tooltip */}
+                        <div style={{
+                            position: "absolute",
+                            left: "calc(70% - 60px)",
+                            bottom: "calc(100% + 8px)",
+                            background: "#2d1b2e",
+                            color: "#fff",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: "5px 12px",
+                            borderRadius: 8,
+                            whiteSpace: "nowrap",
+                            pointerEvents: "none",
+                        }}>
+                            70% Completado
+                            <div style={{
+                                position: "absolute", bottom: -5, left: "50%", transform: "translateX(-50%)",
+                                width: 0, height: 0,
+                                borderLeft: "5px solid transparent",
+                                borderRight: "5px solid transparent",
+                                borderTop: "5px solid #2d1b2e",
+                            }} />
+                        </div>
+
+                        {/* Track */}
+                        <div style={{
+                            height: 14, borderRadius: 9999,
+                            background: "rgba(220,200,210,0.3)",
+                            overflow: "hidden",
+                        }}>
+                            <div
+                                className="progress-fill"
+                                style={{ "--w": "70%", width: "70%" }}
+                            />
                         </div>
                     </div>
 
-                    {/* Right Column */}
-                    <div className="lg:col-span-4 space-y-8">
-                        <div className="glass-card rounded-xl p-8 transition-transform hover:scale-[1.02] duration-300">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-on-tertiary-container">support_agent</span>
-                                </div>
-                                <h2 className="font-headline-md text-[24px] font-semibold">Tu Resumen Semanal</h2>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center py-3 border-b border-outline-variant/20">
-                                    <span className="font-label-md text-on-surface-variant font-semibold">Sesiones con AISE</span>
-                                    <span className="font-bold text-primary">12</span>
-                                </div>
-                                <div className="flex justify-between items-center py-3 border-b border-outline-variant/20">
-                                    <span className="font-label-md text-on-surface-variant font-semibold">Minutos de Calma</span>
-                                    <span className="font-bold text-primary">145m</span>
-                                </div>
-                                <div className="flex justify-between items-center py-3">
-                                    <span className="font-label-md text-on-surface-variant font-semibold">Nivel de Bienestar</span>
-                                    <span className="font-bold text-on-tertiary-container">+15%</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 bg-primary/5 border-l-4 border-primary p-4 rounded-r-lg relative overflow-hidden">
-                                <div className="absolute -right-2 -bottom-2 opacity-5 scale-150">
-                                    <span className="material-symbols-outlined text-6xl text-primary">auto_awesome</span>
-                                </div>
-                                <div className="text-[10px] font-label-md font-semibold uppercase tracking-widest text-primary mb-1">Mensaje de A.I.S.E.</div>
-                                <p className="font-body-md text-body-md italic text-on-surface-variant">
-                                    "Has sido muy constante esta semana. Recuerda que la paz no es el destino, sino el camino que ya estás recorriendo."
-                                </p>
+                    {/* Labels niveles */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 12, color: "#82737a", fontWeight: 500 }}>Nivel 1</span>
+                        <span style={{ fontSize: 12, color: "#82737a", fontWeight: 500 }}>Nivel 2</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 12, color: "#82737a", fontWeight: 500 }}>Nivel 3</span>
+                            <div style={{
+                                width: 28, height: 28, borderRadius: "50%",
+                                background: "rgba(220,200,210,0.35)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                            }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#82737a" strokeWidth="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <button className="flex flex-col items-center justify-center p-6 glass-card rounded-xl hover:bg-primary-container/20 transition-colors group">
-                                <span className="material-symbols-outlined text-primary mb-2 group-hover:scale-110 transition-transform">history</span>
-                                <span className="font-label-md font-semibold text-xs uppercase tracking-wider">Historial</span>
-                            </button>
-                            <button className="flex flex-col items-center justify-center p-6 glass-card rounded-xl hover:bg-error-container/20 transition-colors group">
-                                <span className="material-symbols-outlined text-error mb-2 group-hover:scale-110 transition-transform">emergency_home</span>
-                                <span className="font-label-md font-semibold text-xs uppercase tracking-wider">SOS</span>
-                            </button>
+                {/* ROW 3: Audio + Comunidad */}
+                <div className="dashboard-grid-bottom">
+
+                    {/* Audio Player */}
+                    <div className="mly-card fade-up d4">
+                        <h3 style={{ fontSize: 16, fontWeight: 700, color: "#2d1b2e", marginBottom: 20 }}>Meditación Musical</h3>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                            {/* Artwork */}
+                            <div style={{
+                                width: 90, height: 90, borderRadius: 16, overflow: "hidden", flexShrink: 0,
+                                background: "linear-gradient(135deg, #b3e5fc, #e1bee7)",
+                            }}>
+                                <svg width="90" height="90" viewBox="0 0 90 90">
+                                    <defs>
+                                        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#b3d9f7" />
+                                            <stop offset="100%" stopColor="#fce4ec" />
+                                        </linearGradient>
+                                    </defs>
+                                    <rect width="90" height="90" fill="url(#skyGrad)" />
+                                    {/* Agua */}
+                                    <rect x="0" y="55" width="90" height="35" fill="#7cc8e8" opacity="0.6" />
+                                    {/* Montañas */}
+                                    <polygon points="0,55 25,20 50,55" fill="#6fa8c8" opacity="0.7" />
+                                    <polygon points="20,55 50,15 80,55" fill="#5b8fa8" opacity="0.8" />
+                                    <polygon points="45,55 70,28 90,55" fill="#7ab3c8" opacity="0.7" />
+                                    {/* Sol */}
+                                    <circle cx="68" cy="22" r="9" fill="#ffd54f" opacity="0.85" />
+                                </svg>
+                            </div>
+
+                            {/* Info + controles */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: 11, color: "#b77fb0", fontWeight: 600, letterSpacing: "0.08em", marginBottom: 2 }}>PODCAST</p>
+                                <p style={{ fontSize: 15, fontWeight: 700, color: "#2d1b2e", marginBottom: 12 }}>Sonidos de la Naturaleza</p>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    {/* Play button */}
+                                    <button
+                                        onClick={() => setIsPlaying(!isPlaying)}
+                                        style={{
+                                            width: 40, height: 40, borderRadius: "50%",
+                                            background: "#9c5baa", border: "none", cursor: "pointer",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            flexShrink: 0, transition: "transform 0.15s",
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+                                        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                                    >
+                                        {isPlaying
+                                            ? <svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                                            : <svg width="16" height="16" fill="#fff" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                        }
+                                    </button>
+
+                                    {/* Range */}
+                                    <input
+                                        type="range"
+                                        className="audio-range"
+                                        min={0} max={100}
+                                        value={audioProgress}
+                                        onChange={e => setAudioProgress(Number(e.target.value))}
+                                        style={{ flex: 1, "--pct": pct }}
+                                    />
+
+                                    {/* Spotify icon */}
+                                    <div style={{
+                                        width: 28, height: 28, borderRadius: "50%",
+                                        background: "#1db954", display: "flex", alignItems: "center", justifyContent: "center",
+                                        flexShrink: 0,
+                                    }}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 14.36a.75.75 0 0 1-1.03.25c-2.82-1.73-6.37-2.12-10.55-1.16a.75.75 0 1 1-.34-1.46c4.57-1.05 8.49-.6 11.67 1.34.36.22.47.69.25 1.03zm1.24-2.77a.94.94 0 0 1-1.29.31c-3.23-1.99-8.14-2.56-11.96-1.4a.94.94 0 1 1-.54-1.79c4.37-1.33 9.8-.68 13.48 1.59.44.27.58.85.31 1.29zm.1-2.88c-3.87-2.3-10.25-2.51-13.94-1.39a1.12 1.12 0 1 1-.65-2.15c4.24-1.29 11.28-1.04 15.73 1.6.57.34.75 1.07.42 1.64a1.12 1.12 0 0 1-1.56.3z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Comunidad */}
+                    <div className="mly-card fade-up d5" style={{ position: "relative", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#844c70" strokeWidth="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#2d1b2e" }}>Apoyo de la<br />Comunidad</h3>
+                        </div>
+
+                        {/* Grid avatares */}
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 52px)", gap: 12 }}>
+                            {COMMUNITY_USERS.map((u, i) => (
+                                <div key={u.seed} style={{ position: "relative", width: 52, height: 52 }}>
+                                    <img
+                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${u.seed}`}
+                                        alt={u.seed}
+                                        style={{
+                                            width: 52, height: 52, borderRadius: "50%",
+                                            border: "2.5px solid #fff",
+                                            background: "#f5edf2",
+                                        }}
+                                    />
+                                    {u.online && (
+                                        <div style={{
+                                            position: "absolute", bottom: 2, right: 2,
+                                            width: 12, height: 12, borderRadius: "50%",
+                                            background: "#4caf50", border: "2px solid #fff",
+                                        }} />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* FAB comunidad */}
+                        <div style={{
+                            position: "absolute", bottom: -10, right: -10,
+                            width: 88, height: 88, borderRadius: "50%",
+                            background: "linear-gradient(135deg, #e8a5cd, #ce93d8)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer",
+                            boxShadow: "0 6px 20px rgba(183,127,176,0.35)",
+                        }}>
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                                <circle cx="12" cy="12" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="12" r="2" />
+                            </svg>
                         </div>
                     </div>
                 </div>
             </main>
 
-            {/* BottomNavBar (Mobile Only) */}
-            <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 md:hidden bg-surface/90 dark:bg-surface-container-highest/90 backdrop-blur-2xl shadow-[0_-4px_20px_rgba(132,76,112,0.05)] rounded-t-xl">
-                {[
-                    { id: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
-                    { id: 'mindly', icon: 'bubble_chart', label: 'Mindly AI' },
-                    { id: 'history', icon: 'history', label: 'History' },
-                    { id: 'sos', icon: 'emergency_home', label: 'SOS' }
-                ].map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setActiveNavItem(item.id)}
-                        className={`flex flex-col items-center justify-center px-5 py-1.5 transition-all duration-200 ${activeNavItem === item.id
-                            ? 'bg-primary-container text-on-primary-container rounded-full'
-                            : 'text-on-surface-variant hover:bg-surface-variant/50'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined">{item.icon}</span>
-                        <span className="font-label-md text-[10px] font-semibold">{item.label}</span>
-                    </button>
-                ))}
-            </nav>
-
-            {/* Footer */}
-            <footer className="w-full py-12 bg-surface-container-low border-t border-outline-variant/30 hidden md:block mt-auto relative z-10">
-                <div className="max-w-[1440px] w-full mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="font-headline-md text-headline-sm font-bold text-primary">Mindly</div>
-                    <p className="font-body-md text-body-md text-on-surface-variant">© 2024 Mindly. Digital Sanctuary for your mind.</p>
-                    <div className="flex gap-8">
-                        <a className="font-label-md font-semibold text-xs text-on-surface-variant hover:text-primary transition-colors" href="#">Privacidad</a>
-                        <a className="font-label-md font-semibold text-xs text-on-surface-variant hover:text-primary transition-colors" href="#">Términos</a>
-                        <a className="font-label-md font-semibold text-xs text-on-surface-variant hover:text-primary transition-colors" href="#">Contacto</a>
-                    </div>
+            {/* ── FOOTER ── */}
+            <footer style={{
+                background: "#fff",
+                borderTop: "1px solid rgba(220,200,210,0.35)",
+                padding: "20px 40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+            }}>
+                <span style={{ fontWeight: 700, fontSize: 15, color: "#844c70" }}>Mindly</span>
+                <span style={{ fontSize: 13, color: "#82737a" }}>© 2024 Mindly. Digital Sanctuary for your mind.</span>
+                <div style={{ display: "flex", gap: 20 }}>
+                    {["Privacidad", "Términos", "Contacto"].map(l => (
+                        <a key={l} href="#">{l}</a>
+                    ))}
                 </div>
             </footer>
         </div>
     );
-};
-
-export default Dashboard;
+}

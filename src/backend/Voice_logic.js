@@ -19,19 +19,26 @@ export const useVoiceLogic = () => {
     const [phraseIndex, setPhraseIndex] = useState(0);
     const [transcriptionOpacity, setTranscriptionOpacity] = useState(0.6);
 
+    // NUEVO: Estado para el Modo Texto/Voz
+    const [isTextMode, setIsTextMode] = useState(false);
+    const toggleMode = () => {
+        setIsTextMode(!isTextMode);
+    };
+
     useEffect(() => {
         const interval = setInterval(() => {
-            setTranscriptionOpacity(0);
-
-            setTimeout(() => {
-                setPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
-                setTranscriptionOpacity(0.6);
-            }, 1000);
-
+            // Solo rotar las frases si estamos en modo voz
+            if (!isTextMode) {
+                setTranscriptionOpacity(0);
+                setTimeout(() => {
+                    setPhraseIndex((prevIndex) => (prevIndex + 1) % phrases.length);
+                    setTranscriptionOpacity(0.6);
+                }, 1000);
+            }
         }, 6000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [isTextMode]);
 
     // Lógica del efecto Parallax (Orbe)
     const orbRef = useRef(null);
@@ -44,7 +51,6 @@ export const useVoiceLogic = () => {
             const x = (window.innerWidth / 2 - e.pageX) / 100;
             const y = (window.innerHeight / 2 - e.pageY) / 100;
 
-            // Actualizamos los estilos directamente vía ref para no re-renderizar todo el componente
             orbRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
             glowRef.current.style.transform = `scale(1.05) translate3d(${x * 1.5}px, ${y * 1.5}px, 0) rotate(${Date.now() / 100}deg)`;
         };
@@ -62,6 +68,8 @@ export const useVoiceLogic = () => {
         currentPhrase: phrases[phraseIndex],
         transcriptionOpacity,
         orbRef,
-        glowRef
+        glowRef,
+        isTextMode, // Exportamos el estado
+        toggleMode  // Exportamos la función
     };
 };
