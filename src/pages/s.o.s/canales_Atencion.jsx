@@ -103,7 +103,7 @@ function ConfirmModal({ isOpen, onConfirm, onCancel, title, description, confirm
 
 export default function EmergencyMode({
   userName = "Usuario",
-  trustedContact = { name: "Contacto de Confianza", phone: "tel:+31756662331" },
+  trustedContact = { name: "Contacto de Confianza", phone: "tel:+1234567890" },
   onCallEmergency,
   onCallContact,
 }) {
