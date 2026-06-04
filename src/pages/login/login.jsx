@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { auth } from "../../firebaseConfig";
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import "../login/login_style.css";
 
@@ -16,6 +16,8 @@ const LoginForm = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log(email)
+    console.log(password)
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Sesión iniciada:", userCredential.user);
@@ -38,8 +40,36 @@ const LoginForm = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       console.log("Sesión iniciada con Google:", result.user);
+      
+      const user = result.user;
+
+      // Verificar si el usuario ya tiene una contraseña vinculada
+      const hasPassword = user.providerData.some(p => p.providerId === 'password');
+
+      if (!hasPassword && user.email) {
+        // Usar la contraseña del input si se escribió, sino preguntar al usuario
+        let passwordToLink = password;
+        if (!passwordToLink) {
+          passwordToLink = window.prompt(
+            "Opcional: Ingresa una contraseña para vincularla a tu cuenta. Esto te permitirá iniciar sesión con tu correo en el futuro. (Cancelar o dejar vacío para omitir)"
+          );
+        }
+
+        if (passwordToLink) {
+          try {
+            const credential = EmailAuthProvider.credential(user.email, passwordToLink);
+            await linkWithCredential(user, credential);
+            alert("¡Contraseña vinculada exitosamente! Ahora puedes iniciar sesión con ambos métodos.");
+          } catch (error) {
+            console.error("Error al vincular contraseña:", error);
+            alert("No se pudo vincular la contraseña: " + error.message);
+          }
+        }
+      }
+
       alert("¡Bienvenido!");
       navigate('/chat');
+
     } catch (error) {
       alert("Error al iniciar sesión con Google: " + error.message);
     } finally {

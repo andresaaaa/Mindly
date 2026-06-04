@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
@@ -28,13 +28,40 @@ const VoiceInterface = () => {
   const {
     isSidebarOpen,
     toggleSidebar,
-    currentPhrase,
+    isTextMode,
+    toggleMode,
+    messages,
+    sendMessage,
+    isListening,
+    toggleListening,
+    currentTranscript,
     transcriptionOpacity,
     orbRef,
-    glowRef,
-    isTextMode,
-    toggleMode
+    glowRef
   } = useVoiceLogic();
+
+  const [textInput, setTextInput] = useState('');
+  const chatScrollRef = useRef(null);
+
+  // Auto-scroll del chat hacia abajo cuando hay nuevos mensajes
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [messages, isTextMode]);
+
+  const handleSendText = () => {
+    if (textInput.trim()) {
+      sendMessage(textInput);
+      setTextInput('');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSendText();
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden text-on-surface bg-[#fff8f9] font-['Montserrat']">
@@ -133,20 +160,24 @@ const VoiceInterface = () => {
               isTextMode ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
             }`}
           >
-            <div className="orb-container">
-              <div ref={glowRef} className="vibrating-orb"></div>
-              <div className="orb-ring"></div>
-              <div ref={orbRef} className="orb-inner flex items-center justify-center">
-                <div className="w-3 h-3 bg-primary/20 rounded-full animate-ping"></div>
+            <div 
+              className="orb-container cursor-pointer transition-transform hover:scale-105 active:scale-95" 
+              onClick={toggleListening} 
+              title="Click para hablar/detener"
+            >
+              <div ref={glowRef} className={`vibrating-orb ${isListening ? 'bg-primary/40 scale-110' : ''}`}></div>
+              <div className={`orb-ring ${isListening ? 'border-primary/60 scale-105' : ''}`}></div>
+              <div ref={orbRef} className={`orb-inner flex items-center justify-center ${isListening ? 'shadow-[0_0_30px_rgba(233,165,165,0.6)]' : ''}`}>
+                <div className={`w-3 h-3 rounded-full animate-ping ${isListening ? 'bg-primary/60 scale-150' : 'bg-primary/20'}`}></div>
               </div>
             </div>
 
             <div className="mt-16 max-w-lg text-center px-4">
               <p
-                className="font-body-lg text-body-lg-mobile md:text-body-lg text-neutral-custom/60 italic leading-relaxed transition-opacity duration-1000"
+                className="font-body-lg text-body-lg-mobile md:text-body-lg text-neutral-custom/60 italic leading-relaxed transition-opacity duration-1000 min-h-[60px]"
                 style={{ opacity: transcriptionOpacity }}
               >
-                "{currentPhrase}"
+                "{currentTranscript || (isListening ? 'Escuchando...' : 'Toca el orbe para hablar')}"
               </p>
             </div>
           </main>
@@ -168,25 +199,21 @@ const VoiceInterface = () => {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 overflow-y-auto chat-scroll px-4 pb-4 space-y-6">
-              <div className="flex flex-col items-start max-w-[85%]">
-                <div className="glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant">
-                  Hola, estoy aquí para escucharte. ¿Quieres escribir lo que tienes en mente hoy?
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto chat-scroll px-4 pb-4 space-y-6">
+              {messages.map((msg, index) => (
+                <div key={index} className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'items-end ml-auto' : 'items-start'}`}>
+                  <div className={`${
+                    msg.role === 'user' 
+                      ? 'bg-primary/10 border border-primary/20 px-6 py-4 rounded-2xl rounded-tr-none text-body-md text-on-surface' 
+                      : 'glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant'
+                  }`}>
+                    {msg.text}
+                  </div>
+                  <span className={`text-label-sm text-neutral-custom/40 mt-2 ${msg.role === 'user' ? 'mr-1' : 'ml-1'}`}>
+                    {msg.role === 'user' ? 'Tú' : 'AISE'}
+                  </span>
                 </div>
-                <span className="text-label-sm text-neutral-custom/40 mt-2 ml-1">AISE • Ahora</span>
-              </div>
-              <div className="flex flex-col items-end max-w-[85%] ml-auto">
-                <div className="bg-primary/10 border border-primary/20 px-6 py-4 rounded-2xl rounded-tr-none text-body-md text-on-surface">
-                  Me siento un poco abrumado con el trabajo.
-                </div>
-                <span className="text-label-sm text-neutral-custom/40 mt-2 mr-1">Tú • Hace 1 min</span>
-              </div>
-              <div className="flex flex-col items-start max-w-[85%]">
-                <div className="glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant">
-                  Lamento que te sientas así. El trabajo puede ser una carga pesada. ¿Hay algo específico que te preocupe más en este momento?
-                </div>
-                <span className="text-label-sm text-neutral-custom/40 mt-2 ml-1">AISE • Ahora</span>
-              </div>
+              ))}
             </div>
           </main>
         </div>
@@ -205,12 +232,22 @@ const VoiceInterface = () => {
                 className="w-full h-14 pl-6 pr-12 rounded-full border border-primary/20 bg-white/50 backdrop-blur-md focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none text-on-surface placeholder-neutral-custom/40 transition-all" 
                 placeholder="Escribe aquí tu mensaje..." 
                 type="text" 
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
-              <button className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/60 hover:text-primary transition-colors">
+              <button 
+                className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${isListening ? 'text-primary animate-pulse' : 'text-primary/60 hover:text-primary'}`}
+                onClick={toggleListening}
+                title={isListening ? "Detener grabación" : "Hablar por micrófono"}
+              >
                 <span className="material-symbols-outlined">mic</span>
               </button>
             </div>
-            <button className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+            <button 
+              className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+              onClick={handleSendText}
+            >
               <span className="material-symbols-outlined">send</span>
             </button>
           </div>
