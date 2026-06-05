@@ -274,7 +274,7 @@ export default function ProfileSettings() {
                 style={{ backgroundColor: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)" }}>
                 <div className="flex items-center gap-4">
                     <button
-                        className="p-2 hover:bg-surface-container rounded-full transition-colors"
+                        className="p-2 hover:bg-surface-container rounded-full transition-colors hidden md:block"
                         onClick={openSidebar}
                         aria-label="Abrir menú"
                     >

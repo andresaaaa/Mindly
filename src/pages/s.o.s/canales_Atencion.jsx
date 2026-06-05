@@ -277,7 +277,7 @@ export default function EmergencyMode({
         style={{ backgroundColor: "rgba(255,248,249,0.8)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(220,200,210,0.3)" }}>
         <div className="flex items-center gap-4">
           <button
-            className="p-2 hover:bg-surface-container rounded-full transition-colors"
+            className="p-2 hover:bg-surface-container rounded-full transition-colors hidden md:block"
             onClick={openSidebar}
             aria-label="Abrir menú"
           >

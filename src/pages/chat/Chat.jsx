@@ -125,7 +125,7 @@ const VoiceInterface = () => {
       <div className="relative z-10 flex flex-col h-full px-container-padding-mobile md:px-container-padding-desktop py-10">
         <header className="flex justify-between items-start w-full mb-8 shrink-0">
           <button
-            className="glass-button w-12 h-12 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary active:scale-95"
+            className="glass-button w-12 h-12 hidden md:flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary active:scale-95"
             onClick={toggleSidebar}
           >
             <span className="material-symbols-outlined">menu</span>
