@@ -20,6 +20,8 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebaseConfig';
 import "./memory_Line_style.css";
 
 
@@ -325,6 +327,15 @@ export default function MemoryLane({
     const [loading, setLoading] = useState(false);
     const [activeSession, setActiveSession] = useState(null);
 
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigate('/login');
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        }
+    };
+
     // ── Sidebar ─────────────────────────────────────────────────────────────
     const openSidebar = useCallback(() => setSidebarOpen(true), []);
     const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -423,8 +434,12 @@ export default function MemoryLane({
                         </button>
                     ))}
                 </nav>
-                <div className="p-8 border-t border-primary/10">
-                    <div className="flex items-center space-x-3">
+                <div className="p-8 border-t border-primary/10 flex flex-col gap-6">
+                    <button className="flex items-center gap-3 text-error/70 hover:text-error transition-colors px-4 py-2 text-left" onClick={handleLogout}>
+                        <span className="material-icons-outlined text-[20px]">logout</span>
+                        <span className="text-sm font-semibold">Cerrar sesión</span>
+                    </button>
+                    <div className="flex items-center space-x-3 border-t border-primary/10 pt-6">
                         <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-primary/20">
                             <span className="material-icons-outlined text-on-surface-variant">person</span>
                         </div>
@@ -652,7 +667,7 @@ export default function MemoryLane({
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
                     <div>
                         <h4 className="text-xl font-bold text-neutral">Mindly</h4>
-                        <p className="text-xs text-on-surface-variant mt-2">© 2024 Mindly. Digital Sanctuary for your mind.</p>
+                        <p className="text-xs text-on-surface-variant mt-2">© 2026 Mindly. Digital Sanctuary for your mind.</p>
                     </div>
                     <div className="flex gap-8 text-sm text-on-surface-variant font-medium">
                         <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
@@ -661,6 +676,25 @@ export default function MemoryLane({
                     </div>
                 </div>
             </footer>
+
+            {/* Navbar Inferior (Solo Móvil) */}
+            <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-primary/10 z-[50] flex justify-around items-center h-16 px-2 pb-safe" style={{ backgroundColor: "var(--color-surface, #fff)" }}>
+                {SIDEBAR_LINKS.map((link) => (
+                    <button
+                        key={link.route}
+                        onClick={() => navigate(link.route)}
+                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+                            link.active ? "text-primary" : "text-on-surface-variant"
+                        }`}
+                        style={{ color: link.active ? "var(--color-primary, #e8a5cd)" : "var(--color-on-surface-variant, #82737a)", background: "transparent", border: "none" }}
+                    >
+                        <span className="material-icons-outlined text-[24px]">
+                            {link.icon}
+                        </span>
+                        <span className="text-[10px] font-semibold">{link.label}</span>
+                    </button>
+                ))}
+            </nav>
         </div>
     );
 }

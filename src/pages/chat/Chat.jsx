@@ -272,6 +272,25 @@ const VoiceInterface = () => {
       <div className="fixed bottom-0 left-0 p-8 pointer-events-none opacity-20">
         <div className="w-32 h-32 border-b border-l border-outline-variant rounded-bl-3xl"></div>
       </div>
+
+      {/* Navbar Inferior (Solo Móvil) */}
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-primary/10 z-[50] flex justify-around items-center h-16 px-2 pb-safe" style={{ backgroundColor: "var(--color-surface, #fff)" }}>
+        {SIDEBAR_LINKS.map((link) => (
+          <button
+            key={link.route}
+            onClick={() => navigate(link.route)}
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+              link.active ? "text-primary" : "text-on-surface-variant"
+            }`}
+            style={{ color: link.active ? "var(--color-primary, #e8a5cd)" : "var(--color-on-surface-variant, #82737a)", background: "transparent", border: "none" }}
+          >
+            <span className="material-icons-outlined text-[24px]">
+              {link.icon}
+            </span>
+            <span className="text-[10px] font-semibold">{link.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 };
