@@ -33,8 +33,8 @@
 /* Estilos dinámicos del Orbe */
 .orb-container {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 200px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,8 +42,8 @@
 
 @media (min-width: 768px) {
   .orb-container {
-    width: 400px;
-    height: 400px;
+    width: 260px;
+    height: 260px;
   }
 }
 

@@ -517,7 +517,7 @@ export default function MemoryLane({
                         </div>
 
                         {/* Barras */}
-                        <div className="flex items-end justify-between gap-1 h-40 md:h-48 px-1 md:px-3 w-full overflow-hidden">
+                        <div className="flex items-end justify-between gap-1 h-48 md:h-56 px-1 md:px-3 w-full overflow-hidden">
                             {CHART_DATA.map((bar, i) => (
                                 <ChartBar
                                     key={bar.day}

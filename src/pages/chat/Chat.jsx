@@ -152,7 +152,7 @@ const VoiceInterface = () => {
         </header>
 
         {/* Content Area Container */}
-        <div className="flex-1 relative overflow-hidden flex flex-col items-center justify-center">
+        <div className="flex-1 relative flex flex-col items-center justify-center">
           
           {/* Voice Mode Container */}
           <main 
@@ -219,7 +219,7 @@ const VoiceInterface = () => {
         </div>
 
         {/* Footer Area */}
-        <footer className="mt-8 flex flex-col items-center gap-6 shrink-0 pb-4">
+        <footer className="mt-8 flex flex-col items-center gap-6 shrink-0 pb-24 md:pb-4">
           
           {/* Text Mode Input Container */}
           <div 
