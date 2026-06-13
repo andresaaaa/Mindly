@@ -8,7 +8,7 @@ import { auth } from '../firebaseConfig';
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI("AQ.Ab8RN6Jeopa-6kF1u685ZQwj90hL615apFRgeVca7xTcdBKJuQ");
 
-const systemInstruction = "Eres A.I.S.E. (Artificial Intelligence for Serenity & Empathy), una IA de asistencia psicológica, calma mental y mindfulness de la app Mindly. Tu nombre significa Mindful Resonance. Eres empática, calmada y paciente. Das respuestas cortas, reflexivas y útiles (máximo 2-3 oraciones breves). Tu idioma principal es el español.";
+const systemInstruction = "Eres A.I.S.E., tu nombre significa Asistente Inteligente de Soporte Emocional. Eres una IA de asistencia psicológica, calma mental y mindfulness de la app Mindly. Eres empática, calmada y paciente. Das respuestas cortas, reflexivas y útiles (máximo 2-3 oraciones breves). Tu idioma principal es el español.";
 
 export const useVoiceLogic = () => {
     // Lógica del Sidebar
@@ -21,7 +21,7 @@ export const useVoiceLogic = () => {
 
     // Lógica de transcripción y Chat
     const [messages, setMessages] = useState([
-        { role: 'model', text: 'Hola, estoy aquí para escucharte. ¿Quieres decirme lo que tienes en mente hoy?' }
+        { role: 'model', text: 'Hola, soy A.I.S.E., tu Asistente Inteligente de Soporte Emocional. Estoy aquí para escucharte.' }
     ]);
     const [isListening, setIsListening] = useState(false);
     const [currentTranscript, setCurrentTranscript] = useState("");
@@ -49,7 +49,7 @@ export const useVoiceLogic = () => {
             chatSessionRef.current = model.startChat({
                 history: [
                     { role: "user", parts: [{ text: "Hola" }] },
-                    { role: "model", parts: [{ text: "Hola, estoy aquí para escucharte. ¿Quieres decirme lo que tienes en mente hoy?" }] }
+                    { role: "model", parts: [{ text: "Hola, soy A.I.S.E., tu Asistente Inteligente de Soporte Emocional. Estoy aquí para escucharte." }] }
                 ],
             });
         } catch (error) {

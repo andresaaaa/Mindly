@@ -142,9 +142,9 @@ function AddContactModal({ onClose, onAdd }) {
 }
 
 const SIDEBAR_LINKS = [
-    { icon: "mood", label: "Ánimo", route: "/chat" },
-    { icon: "air", label: "Respirar", route: "/sos" },
-    { icon: "edit_note", label: "Diario", route: "/historial" },
+    { icon: "bubble_chart", label: "Chat", route: "/chat" },
+    { icon: "emergency", label: "Panel de Emergencia", route: "/sos" },
+    { icon: "history", label: "Historial de Sesiones", route: "/historial" },
     { icon: "person", label: "Perfil", route: "/configuracion", active: true },
 ];
 

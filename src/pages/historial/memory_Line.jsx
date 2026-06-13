@@ -143,9 +143,9 @@ const PAGE_SIZE = 3;
 
 // ─── Sidebar links ────────────────────────────────────────────────────────────
 const SIDEBAR_LINKS = [
-    { icon: "mood", label: "Ánimo", route: "/chat" },
-    { icon: "air", label: "Respirar", route: "/sos" },
-    { icon: "edit_note", label: "Diario", route: "/historial", active: true },
+    { icon: "bubble_chart", label: "Chat", route: "/chat" },
+    { icon: "emergency", label: "Panel de Emergencia", route: "/sos" },
+    { icon: "history", label: "Historial de Sesiones", route: "/historial", active: true },
     { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 

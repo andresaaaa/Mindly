@@ -6,9 +6,9 @@ import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
 
 const SIDEBAR_LINKS = [
-  { icon: "mood", label: "Ánimo", route: "/chat", active: true },
-  { icon: "air", label: "Respirar", route: "/sos" },
-  { icon: "edit_note", label: "Diario", route: "/historial" },
+  { icon: "bubble_chart", label: "Chat", route: "/chat", active: true },
+  { icon: "emergency", label: "Panel de Emergencia", route: "/sos" },
+  { icon: "history", label: "Historial de Sesiones", route: "/historial" },
   { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 
@@ -166,7 +166,7 @@ const VoiceInterface = () => {
               </span>
             </button>
             <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors" onClick={() => navigate('/sos')}>
-              <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
+              <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency</span>
               <span className="font-label-md text-label-md">S.O.S.</span>
             </button>
           </div>

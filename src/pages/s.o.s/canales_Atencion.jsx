@@ -41,18 +41,18 @@ const RESOURCES = [
 
 /** Rutas del sidebar */
 const SIDEBAR_LINKS = [
-  { icon: "mood", label: "Ánimo", route: "/chat" },
-  { icon: "air", label: "Respirar", route: "/sos", active: true },
-  { icon: "edit_note", label: "Diario", route: "/historial" },
+  { icon: "bubble_chart", label: "Chat", route: "/chat" },
+  { icon: "emergency", label: "Panel de Emergencia", route: "/sos", active: true },
+  { icon: "history", label: "Historial de Sesiones", route: "/historial" },
   { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 
 /** Rutas del bottom nav (móvil) */
 const BOTTOM_NAV = [
   { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-  { icon: "bubble_chart", label: "Mindly AI", route: "/chat" },
-  { icon: "history", label: "History", route: "/historial" },
-  { icon: "emergency_home", label: "SOS", route: "/sos", active: true },
+  { icon: "bubble_chart", label: "Chat", route: "/chat" },
+  { icon: "history", label: "Historial de Sesiones", route: "/historial" },
+  { icon: "emergency", label: "Panel de Emergencia", route: "/sos", active: true },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
