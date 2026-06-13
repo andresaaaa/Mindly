@@ -20,8 +20,9 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
+import { getUserSessions } from '../../backend/SessionService';
 import "./memory_Line_style.css";
 
 
@@ -137,7 +138,7 @@ const CHART_DATA = [
     { day: "Dom", height: 96, color: "bg-[#d1e0c7]", colorHover: "#d1e0c7", score: 6, mood: "Calm" },
 ];
 
-const MOOD_FILTERS = ["All", "Calm", "Anxious", "Joyful", "Introspective", "Grateful", "Venting"];
+const MOOD_FILTERS = ["Todos", "Tranquilo", "Ansioso", "Feliz", "Introspectivo", "Agradecido", "Desahogo", "Neutral"];
 const PAGE_SIZE = 3;
 
 // ─── Sidebar links ────────────────────────────────────────────────────────────
@@ -316,16 +317,39 @@ export default function MemoryLane({
     userName = "Usuario",
 }) {
     const navigate = useNavigate();
-    const sessions = propSessions ?? ALL_SESSIONS;
-
     // ── Estado ──────────────────────────────────────────────────────────────
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedBar, setSelectedBar] = useState(null);
     const [moodFilter, setMoodFilter] = useState("All");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [activeSession, setActiveSession] = useState(null);
+    
+    const [fetchedSessions, setFetchedSessions] = useState(null);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                getUserSessions(currentUser.uid).then(data => {
+                    setFetchedSessions(data);
+                    setLoading(false);
+                }).catch(err => {
+                    console.error("Error fetching sessions:", err);
+                    setFetchedSessions([]);
+                    setLoading(false);
+                });
+            } else {
+                setFetchedSessions([]);
+                setLoading(false);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const sessions = propSessions ?? fetchedSessions ?? [];
 
     const handleLogout = async () => {
         try {
@@ -352,7 +376,7 @@ export default function MemoryLane({
     // ── Filtro + búsqueda ────────────────────────────────────────────────────
     const filtered = useMemo(() => {
         let result = sessions;
-        if (moodFilter !== "All") {
+        if (moodFilter !== "Todos") {
             result = result.filter((s) =>
                 s.moods.some((m) => m.label.toLowerCase() === moodFilter.toLowerCase())
             );
@@ -385,11 +409,58 @@ export default function MemoryLane({
     };
 
     // ── Gráfico ──────────────────────────────────────────────────────────────
+    const dynamicChartData = useMemo(() => {
+        const days = [];
+        const today = new Date();
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            days.push(d);
+        }
+        const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        
+        return days.map(d => {
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const daySessions = sessions.filter(s => s.date === dateStr);
+            const dayName = dayNames[d.getDay()];
+            
+            if (daySessions.length === 0) {
+                return { day: dayName, height: 20, color: "bg-surface-container", colorHover: "#ccc", score: 0, mood: "None" };
+            }
+            
+            const lastSession = daySessions[0];
+            const mainMood = lastSession.moods[0];
+            const score = Math.min(10, Math.max(1, lastSession.minutes / 2));
+            const height = Math.min(180, Math.max(20, score * 18));
+            
+            let colorHover = "#ccc";
+            if (mainMood.label === "Tranquilo") colorHover = "#7be0e8";
+            else if (mainMood.label === "Introspectivo" || mainMood.label === "Agradecido") colorHover = "#e8a5cd";
+            else if (mainMood.label === "Feliz") colorHover = "#d1e0c7";
+            else if (mainMood.label === "Ansioso") colorHover = "#7D526C";
+            else if (mainMood.label === "Desahogo") colorHover = "#d8b4e2";
+            else if (mainMood.label === "Neutral") colorHover = "#a8a8a8";
+            
+            let colorBase = mainMood.bg.replace("100", "60").replace("10", "40");
+            if (mainMood.label === "Ansioso") colorBase = "bg-[#7D526C]";
+            else if (mainMood.label === "Neutral") colorBase = "bg-gray-400";
+            
+            return {
+                day: dayName,
+                height: height,
+                color: colorBase,
+                colorHover: colorHover,
+                score: Math.round(score),
+                mood: mainMood.label
+            };
+        });
+    }, [sessions]);
+
     const handleBarClick = (index) => {
         setSelectedBar((prev) => (prev === index ? null : index));
     };
 
-    const selectedDayInfo = selectedBar !== null ? CHART_DATA[selectedBar] : null;
+    const selectedDayInfo = selectedBar !== null ? dynamicChartData[selectedBar] : null;
 
     // ─── Render ──────────────────────────────────────────────────────────────
     return (
@@ -444,7 +515,7 @@ export default function MemoryLane({
                             <span className="material-icons-outlined text-on-surface-variant">person</span>
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-on-surface">{userName}</p>
+                            <p className="text-sm font-semibold text-on-surface">{user?.displayName || user?.email || "Usuario"}</p>
                             <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
                         </div>
                     </div>
@@ -516,27 +587,39 @@ export default function MemoryLane({
                             </div>
                         </div>
 
-                        {/* Barras */}
-                        <div className="flex items-end justify-between gap-1 h-48 md:h-56 px-1 md:px-3 w-full overflow-hidden">
-                            {CHART_DATA.map((bar, i) => (
-                                <ChartBar
-                                    key={bar.day}
-                                    bar={bar}
-                                    index={i}
-                                    isSelected={selectedBar === i}
-                                    onClick={handleBarClick}
-                                />
-                            ))}
-                        </div>
+                        {/* Barras o Empty State */}
+                        {sessions.length === 0 && !loading ? (
+                             <div className="flex flex-col items-center justify-center h-48 md:h-56 w-full text-on-surface-variant text-center gap-3">
+                                <span className="material-icons-outlined text-[48px] text-outline opacity-50">show_chart</span>
+                                <div>
+                                    <p className="font-semibold text-sm">Sin historial de emociones</p>
+                                    <p className="text-xs opacity-80 max-w-[200px] mx-auto mt-1">Completa tu primera sesión con la IA para ver tu flujo emocional aquí.</p>
+                                </div>
+                             </div>
+                        ) : (
+                            <div className="flex items-end justify-between gap-1 h-48 md:h-56 px-1 md:px-3 w-full overflow-hidden">
+                                {dynamicChartData.map((bar, i) => (
+                                    <ChartBar
+                                        key={i}
+                                        bar={bar}
+                                        index={i}
+                                        isSelected={selectedBar === i}
+                                        onClick={handleBarClick}
+                                    />
+                                ))}
+                            </div>
+                        )}
 
                         {/* Leyenda de colores de mood */}
                         <div className="mt-5 flex flex-wrap gap-3">
                             {[
-                                { label: "Calm", color: "#7be0e8" },
-                                { label: "Introspective", color: "#e8a5cd" },
-                                { label: "Joyful", color: "#d1e0c7" },
-                                { label: "Anxious", color: "#7D526C" },
-                                { label: "Grateful", color: "#e8a5cd" },
+                                { label: "Tranquilo", color: "#7be0e8" },
+                                { label: "Introspectivo", color: "#e8a5cd" },
+                                { label: "Feliz", color: "#d1e0c7" },
+                                { label: "Ansioso", color: "#7D526C" },
+                                { label: "Agradecido", color: "#e8a5cd" },
+                                { label: "Desahogo", color: "#d8b4e2" },
+                                { label: "Neutral", color: "#a8a8a8" },
                             ].map((item) => (
                                 <span key={item.label} className="flex items-center gap-1.5 text-[11px] text-on-surface-variant font-medium">
                                     <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item.color }} />
@@ -604,7 +687,7 @@ export default function MemoryLane({
                             </div>
                             <button
                                 className="text-primary font-semibold text-sm hover:underline"
-                                onClick={() => { setMoodFilter("All"); setSearch(""); }}
+                                onClick={() => { setMoodFilter("Todos"); setSearch(""); }}
                             >
                                 Ver Todo
                             </button>
@@ -694,6 +777,16 @@ export default function MemoryLane({
                         <span className="text-[10px] font-semibold">{link.label}</span>
                     </button>
                 ))}
+                <button
+                    onClick={handleLogout}
+                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+                    style={{ background: "transparent", border: "none" }}
+                >
+                    <span className="material-icons-outlined text-[24px]">
+                        logout
+                    </span>
+                    <span className="text-[10px] font-semibold">Salir</span>
+                </button>
             </nav>
         </div>
     );

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 
 import "./dashboard_style.css";
@@ -44,7 +44,15 @@ export default function MindlyDashboard() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [audioProgress, setAudioProgress] = useState(38);
     const [currentMonth, setCurrentMonth] = useState("Icvana 2024");
+    const [user, setUser] = useState(null);
     const intervalRef = useRef(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const openSidebar = () => setSidebarOpen(true);
     const closeSidebar = () => setSidebarOpen(false);
@@ -133,7 +141,7 @@ export default function MindlyDashboard() {
                             <span className="material-icons-outlined text-on-surface-variant">person</span>
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-on-surface">Usuario</p>
+                            <p className="text-sm font-semibold text-on-surface">{user?.displayName || user?.email || "Usuario"}</p>
                             <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
                         </div>
                     </div>
@@ -508,6 +516,16 @@ export default function MindlyDashboard() {
                         <span className="text-[10px] font-semibold">{link.label}</span>
                     </button>
                 ))}
+                <button
+                    onClick={handleLogout}
+                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+                    style={{ background: "transparent", border: "none" }}
+                >
+                    <span className="material-icons-outlined text-[24px]">
+                        logout
+                    </span>
+                    <span className="text-[10px] font-semibold">Salir</span>
+                </button>
             </nav>
         </div>
     );

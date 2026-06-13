@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
@@ -37,11 +37,21 @@ const VoiceInterface = () => {
     currentTranscript,
     transcriptionOpacity,
     orbRef,
-    glowRef
+    glowRef,
+    endSession,
+    isProcessingSummary
   } = useVoiceLogic();
 
   const [textInput, setTextInput] = useState('');
+  const [user, setUser] = useState(null);
   const chatScrollRef = useRef(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Auto-scroll del chat hacia abajo cuando hay nuevos mensajes
   useEffect(() => {
@@ -114,7 +124,7 @@ const VoiceInterface = () => {
               <span className="material-icons-outlined text-on-surface-variant">person</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-on-surface">Usuario</p>
+              <p className="text-sm font-semibold text-on-surface">{user?.displayName || user?.email || "Usuario"}</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
             </div>
           </div>
@@ -144,6 +154,18 @@ const VoiceInterface = () => {
                 <span className="material-symbols-outlined">graphic_eq</span>
               </button>
             )}
+            <button
+              className="glass-button px-4 md:px-6 h-12 flex items-center gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+              onClick={endSession}
+              disabled={isProcessingSummary}
+            >
+              <span className={`material-symbols-outlined text-[20px] ${isProcessingSummary ? 'animate-spin' : ''}`}>
+                {isProcessingSummary ? "autorenew" : "stop_circle"}
+              </span>
+              <span className="font-label-md text-label-md hidden md:block">
+                {isProcessingSummary ? "Resumiendo..." : "Terminar Sesión"}
+              </span>
+            </button>
             <button className="glass-button px-6 h-12 flex items-center gap-3 rounded-full border-primary/20 text-primary hover:bg-primary/5 transition-colors" onClick={() => navigate('/sos')}>
               <span className="material-symbols-outlined text-[20px] text-error" style={{ fontVariationSettings: "'FILL' 1" }}>emergency_home</span>
               <span className="font-label-md text-label-md">S.O.S.</span>
@@ -290,6 +312,16 @@ const VoiceInterface = () => {
             <span className="text-[10px] font-semibold">{link.label}</span>
           </button>
         ))}
+        <button
+            onClick={handleLogout}
+            className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+            style={{ background: "transparent", border: "none" }}
+        >
+            <span className="material-icons-outlined text-[24px]">
+                logout
+            </span>
+            <span className="text-[10px] font-semibold">Salir</span>
+        </button>
       </nav>
     </div>
   );

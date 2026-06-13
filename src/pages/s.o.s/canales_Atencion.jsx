@@ -19,8 +19,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
+import { getUserSettings } from '../../backend/SettingsService';
 import "./CrisisSOS.css";
 
 // ─── Constantes ──────────────────────────────────────────────────────────────
@@ -110,6 +111,26 @@ export default function EmergencyMode({
   onCallContact,
 }) {
   const navigate = useNavigate();
+  // ── Estado de Configuración y Autenticación ─────────────────────────────
+  const [user, setUser] = useState(null);
+  const [savedContact, setSavedContact] = useState(trustedContact);
+  const [savedEmergencyLine, setSavedEmergencyLine] = useState("106");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        getUserSettings(currentUser.uid).then(data => {
+          if (data) {
+            if (data.emergencyLine) setSavedEmergencyLine(data.emergencyLine);
+            if (data.trustedContact) setSavedContact({ name: data.trustedContact.name, phone: `tel:${data.trustedContact.phone}` });
+          }
+        }).catch(err => console.error(err));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // ── Estado del sidebar ──────────────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -183,9 +204,9 @@ export default function EmergencyMode({
   // ── Lógica de llamadas ─────────────────────────────────────────────────
   const handleConfirmCall = () => {
     if (modal === "emergency") {
-      onCallEmergency ? onCallEmergency() : (window.location.href = "tel:106");
+      onCallEmergency ? onCallEmergency() : (window.location.href = `tel:${savedEmergencyLine}`);
     } else if (modal === "contact") {
-      onCallContact ? onCallContact() : (window.location.href = trustedContact.phone);
+      onCallContact ? onCallContact() : (window.location.href = savedContact.phone);
     }
     setModal(null);
   };
@@ -193,12 +214,12 @@ export default function EmergencyMode({
   const modalConfig = {
     emergency: {
       title: "¿Llamar a Emergencias?",
-      description: "Se marcará la línea 106. Úsalo sólo si tú o alguien está en peligro inmediato.",
+      description: `Se marcará la línea ${savedEmergencyLine}. Úsalo sólo si tú o alguien está en peligro inmediato.`,
       confirmLabel: "Sí, llamar ahora",
       cancelLabel: "Cancelar",
     },
     contact: {
-      title: `¿Llamar a ${trustedContact.name}?`,
+      title: `¿Llamar a ${savedContact.name}?`,
       description: "Se iniciará una llamada a tu contacto de confianza.",
       confirmLabel: "Sí, llamar",
       cancelLabel: "Cancelar",
@@ -265,7 +286,7 @@ export default function EmergencyMode({
               <span className="material-icons-outlined text-on-surface-variant">person</span>
             </div>
             <div>
-              <p className="text-sm font-semibold text-on-surface">{userName}</p>
+              <p className="text-sm font-semibold text-on-surface">{user?.displayName || user?.email || "Usuario"}</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
             </div>
           </div>
@@ -347,7 +368,7 @@ export default function EmergencyMode({
               </span>
             </div>
             <h2 className="font-label-md text-[15px] font-semibold text-[#93000a] mb-1">
-              Llamar a Emergencias (Línea 106)
+              Llamar a Emergencias (Línea {savedEmergencyLine})
             </h2>
             <span className="text-[11px] text-[#93000a] font-bold tracking-wider uppercase">
               ATENCIÓN INMEDIATA
@@ -368,7 +389,7 @@ export default function EmergencyMode({
               </span>
             </div>
             <h2 className="font-label-md text-[15px] font-semibold text-[#36092a] mb-1">
-              Llamar a {trustedContact.name}
+              Llamar a {savedContact.name}
             </h2>
             <span className="text-[11px] text-[#36092a]/70 font-bold tracking-wider uppercase">
               RED DE APOYO
@@ -471,6 +492,16 @@ export default function EmergencyMode({
             <span className="text-[10px] font-semibold">{link.label}</span>
           </button>
         ))}
+        <button
+            onClick={handleLogout}
+            className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+            style={{ background: "transparent", border: "none" }}
+        >
+            <span className="material-icons-outlined text-[24px]">
+                logout
+            </span>
+            <span className="text-[10px] font-semibold">Salir</span>
+        </button>
       </nav>
     </div>
   );

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
+import { getUserSettings, saveUserSettings } from '../../backend/SettingsService';
 import './settings_style.css';
 
 // ─── Toggle Switch ──────────────────────────────────────────────────────────
@@ -154,17 +155,40 @@ export default function ProfileSettings() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [voicePersona, setVoicePersona] = useState("Calm");
     const [frequency, setFrequency] = useState(3);
-    const [contacts, setContacts] = useState([
-        { initials: "MW", name: "Marcus Wells", relation: "Spouse", phone: "(555) 012-3456", color: "secondary" },
-        { initials: "DP", name: "Dr. Elena Park", relation: "Therapist", phone: "(555) 987-6543", color: "primary" },
-    ]);
+    const [contacts, setContacts] = useState([]);
+    const [emergencyLine, setEmergencyLine] = useState("106");
     const [notifications, setNotifications] = useState({ push: true, weekly: true, quiet: false });
     const [formData, setFormData] = useState({
         legalName: "Seraphina Wells", preferredName: "Sera", email: "sera.wells@mindly.io",
     });
     const [showModal, setShowModal] = useState(false);
     const [toast, setToast] = useState({ message: "", visible: false });
+    const [user, setUser] = useState(null);
     const toastTimer = useRef(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+            if (currentUser) {
+                getUserSettings(currentUser.uid).then(data => {
+                    if (data) {
+                        setVoicePersona(data.voicePersona || "Calm");
+                        setFrequency(data.frequency || 3);
+                        setNotifications(data.notifications || { push: true, weekly: true, quiet: false });
+                        setEmergencyLine(data.emergencyLine || "106");
+                        if (data.trustedContact) {
+                            setContacts([data.trustedContact]);
+                        } else {
+                            setContacts([]);
+                        }
+                    }
+                }).catch(err => console.error(err));
+            } else {
+                setContacts([]);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     const openSidebar = () => setSidebarOpen(true);
     const closeSidebar = () => setSidebarOpen(false);
@@ -196,9 +220,24 @@ export default function ProfileSettings() {
         toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!formData.email.includes("@")) { showToast("⚠️ Enter a valid email address."); return; }
-        showToast("✓ Preferences saved successfully!");
+        if (user) {
+            try {
+                await saveUserSettings(user.uid, {
+                    voicePersona,
+                    frequency,
+                    notifications,
+                    emergencyLine,
+                    trustedContact: contacts.length > 0 ? contacts[0] : null
+                });
+                showToast("✓ Preferences saved successfully!");
+            } catch (err) {
+                showToast("⚠️ Error saving preferences.");
+            }
+        } else {
+            showToast("⚠️ Debes iniciar sesión para guardar.");
+        }
     };
 
     const handleDiscard = () => {
@@ -262,7 +301,7 @@ export default function ProfileSettings() {
                             <span className="material-icons-outlined text-on-surface-variant">person</span>
                         </div>
                         <div>
-                            <p className="text-sm font-semibold text-on-surface">Usuario</p>
+                            <p className="text-sm font-semibold text-on-surface">{user?.displayName || user?.email || "Usuario"}</p>
                             <p className="text-[10px] text-outline uppercase tracking-wider">Plan Premium</p>
                         </div>
                     </div>
@@ -391,6 +430,12 @@ export default function ProfileSettings() {
                         </div>
                         <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Individuals Mindly will reach out to if AI indicators detect a crisis level.</p>
                     </header>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+                        <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>Emergency Line</label>
+                        <input className="mindly-input" type="text" value={emergencyLine} onChange={e => setEmergencyLine(e.target.value)} placeholder="e.g. 106, 911" />
+                    </div>
+
                     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                         {contacts.length === 0 && (
                             <p style={{ textAlign: "center", color: "var(--color-neutral-text)", fontSize: 14, padding: "24px 0" }}>No trusted contacts yet.</p>
@@ -399,10 +444,12 @@ export default function ProfileSettings() {
                             <ContactItem key={i} {...c} onDelete={() => { setContacts(prev => prev.filter((_, idx) => idx !== i)); showToast("Contact removed."); }} />
                         ))}
                     </div>
-                    <button className="btn-dashed" onClick={() => setShowModal(true)}>
-                        <span className="material-symbols-outlined">add_circle</span>
-                        Add Trusted Contact
-                    </button>
+                    {contacts.length === 0 && (
+                        <button className="btn-dashed" onClick={() => setShowModal(true)}>
+                            <span className="material-symbols-outlined">add_circle</span>
+                            Add Trusted Contact
+                        </button>
+                    )}
                 </section>
 
                 {/* 4. Notification Hub */}
@@ -483,6 +530,16 @@ export default function ProfileSettings() {
                         <span className="text-[10px] font-semibold">{link.label}</span>
                     </button>
                 ))}
+                <button
+                    onClick={handleLogout}
+                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+                    style={{ background: "transparent", border: "none" }}
+                >
+                    <span className="material-icons-outlined text-[24px]">
+                        logout
+                    </span>
+                    <span className="text-[10px] font-semibold">Salir</span>
+                </button>
             </nav>
         </div>
     );
