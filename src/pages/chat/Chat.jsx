@@ -38,7 +38,8 @@ const VoiceInterface = () => {
     orbRef,
     glowRef,
     endSession,
-    isProcessingSummary
+    isProcessingSummary,
+    initTTS
   } = useVoiceLogic();
 
   const [textInput, setTextInput] = useState('');
@@ -61,6 +62,7 @@ const VoiceInterface = () => {
 
   const handleSendText = () => {
     if (textInput.trim()) {
+      initTTS(); // Desbloquear TTS en iOS
       sendMessage(textInput);
       setTextInput('');
     }

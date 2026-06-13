@@ -114,25 +114,39 @@ export const useVoiceLogic = () => {
     // Lógica Text-to-Speech (TTS)
     const speakResponse = useCallback((text) => {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Detener cualquier audio previo
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'es-ES';
-
-            // Buscar una voz menos robótica (Google, Online, Natural)
-            const voices = window.speechSynthesis.getVoices();
-            let esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Online') || v.name.includes('Natural')));
-            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es') && v.name.includes('Microsoft'));
-            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es'));
-            
-            if (esVoice) {
-                utterance.voice = esVoice;
+            // iOS bug fix: solo cancelar si realmente está hablando, y hacer una pequeña pausa
+            if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                window.speechSynthesis.cancel();
             }
 
-            utterance.rate = 1.0; // Velocidad normal para fluidez
-            utterance.pitch = 1.1; // Tono más alto para sonar menos robótico
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
 
-            window.speechSynthesis.speak(utterance);
+                // Buscar una voz menos robótica (Google, Online, Natural, o voces de iOS como Mónica/Paulina)
+                const voices = window.speechSynthesis.getVoices();
+                let esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Online') || v.name.includes('Natural') || v.name.includes('Siri')));
+                if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Microsoft') || v.name.includes('Mónica') || v.name.includes('Paulina') || v.name.includes('Diego')));
+                if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es'));
+                
+                if (esVoice) {
+                    utterance.voice = esVoice;
+                }
+
+                utterance.rate = 1.0; // Velocidad normal para fluidez
+                utterance.pitch = 1.1; // Tono más alto para sonar menos robótico
+
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        }
+    }, []);
+
+    // Función para desbloquear TTS en iOS (debe llamarse en un evento de usuario directo)
+    const initTTS = useCallback(() => {
+        if ('speechSynthesis' in window) {
+            const silentUtterance = new SpeechSynthesisUtterance('');
+            silentUtterance.volume = 0;
+            window.speechSynthesis.speak(silentUtterance);
         }
     }, []);
 
@@ -240,6 +254,7 @@ export const useVoiceLogic = () => {
         if (isListening) {
             recognitionRef.current?.stop();
         } else {
+            initTTS(); // Desbloquear TTS en iOS al primer toque
             setCurrentTranscript("Escuchando...");
             setTranscriptionOpacity(0.6);
             recognitionRef.current?.start();
@@ -433,6 +448,8 @@ ${chatHistoryText}`;
         orbRef,
         glowRef,
         endSession,
-        isProcessingSummary
+        isProcessingSummary,
+        sessionStartTimeRef,
+        initTTS
     };
 };
