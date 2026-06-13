@@ -6,10 +6,10 @@ import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
 
 const SIDEBAR_LINKS = [
-  { icon: "bubble_chart", label: "Chat", route: "/chat", active: true },
-  { icon: "emergency", label: "Panel de Emergencia", route: "/sos" },
-  { icon: "history", label: "Historial de Sesiones", route: "/historial" },
-  { icon: "person", label: "Perfil", route: "/configuracion" },
+  { icon: "bubble_chart", label: "Chat", mobileLabel: "Chat", route: "/chat", active: true },
+  { icon: "emergency", label: "Panel de Emergencia", mobileLabel: "Emergencia", route: "/sos" },
+  { icon: "history", label: "Historial de Sesiones", mobileLabel: "Historial", route: "/historial" },
+  { icon: "person", label: "Perfil", mobileLabel: "Perfil", route: "/configuracion" },
 ];
 
 const VoiceInterface = () => {
@@ -296,7 +296,7 @@ const VoiceInterface = () => {
           <button
             key={link.label}
             onClick={() => navigate(link.route)}
-            className={`flex flex-col items-center justify-center w-16 h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant hover:text-primary transition-colors"
+            className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant hover:text-primary transition-colors"
               }`}
           >
             <div
@@ -307,14 +307,14 @@ const VoiceInterface = () => {
                 {link.icon}
               </span>
             </div>
-            <span className="text-[11px] font-medium tracking-wide">
-              {link.label}
+            <span className="text-[10px] font-medium tracking-wide text-center px-1 truncate w-full">
+              {link.mobileLabel || link.label}
             </span>
           </button>
         ))}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+          className="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-on-surface-variant"
           style={{ background: "transparent", border: "none" }}
         >
           <span className="material-icons-outlined text-[24px]">

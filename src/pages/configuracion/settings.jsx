@@ -142,10 +142,10 @@ function AddContactModal({ onClose, onAdd }) {
 }
 
 const SIDEBAR_LINKS = [
-    { icon: "bubble_chart", label: "Chat", route: "/chat" },
-    { icon: "emergency", label: "Panel de Emergencia", route: "/sos" },
-    { icon: "history", label: "Historial de Sesiones", route: "/historial" },
-    { icon: "person", label: "Perfil", route: "/configuracion", active: true },
+    { icon: "bubble_chart", label: "Chat", mobileLabel: "Chat", route: "/chat" },
+    { icon: "emergency", label: "Panel de Emergencia", mobileLabel: "Emergencia", route: "/sos" },
+    { icon: "history", label: "Historial de Sesiones", mobileLabel: "Historial", route: "/historial" },
+    { icon: "person", label: "Perfil", mobileLabel: "Perfil", route: "/configuracion", active: true },
 ];
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -533,19 +533,19 @@ export default function ProfileSettings() {
                     <button
                         key={link.route}
                         onClick={() => navigate(link.route)}
-                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant"
+                        className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant"
                             }`}
                         style={{ color: link.active ? "var(--color-primary)" : "var(--color-on-surface-variant)", background: "transparent", border: "none" }}
                     >
                         <span className="material-icons-outlined text-[24px]">
                             {link.icon}
                         </span>
-                        <span className="text-[10px] font-semibold">{link.label}</span>
+                        <span className="text-[10px] font-semibold text-center px-1 truncate w-full">{link.mobileLabel || link.label}</span>
                     </button>
                 ))}
                 <button
                     onClick={handleLogout}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+                    className="flex flex-col items-center justify-center flex-1 h-full space-y-1 text-on-surface-variant"
                     style={{ background: "transparent", border: "none" }}
                 >
                     <span className="material-icons-outlined text-[24px]">
