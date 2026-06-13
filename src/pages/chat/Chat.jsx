@@ -273,7 +273,7 @@ const VoiceInterface = () => {
 
           {/* Mode Toggle Button */}
           <button
-            onClick={toggleMode}
+            onClick={() => { initTTS(); toggleMode(); }}
             className={`glass-button items-center gap-3 px-8 py-4 rounded-full text-primary font-label-md text-label-md group hover:bg-primary/5 ${isTextMode ? 'hidden md:flex' : 'flex'}`}
           >
             <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">

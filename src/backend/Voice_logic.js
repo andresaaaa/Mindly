@@ -144,8 +144,10 @@ export const useVoiceLogic = () => {
     // Función para desbloquear TTS en iOS (debe llamarse en un evento de usuario directo)
     const initTTS = useCallback(() => {
         if ('speechSynthesis' in window) {
-            const silentUtterance = new SpeechSynthesisUtterance('');
-            silentUtterance.volume = 0;
+            // iOS a veces ignora strings vacíos o con volumen 0, usamos un espacio con volumen bajo
+            const silentUtterance = new SpeechSynthesisUtterance(' ');
+            silentUtterance.volume = 0.01;
+            silentUtterance.rate = 10;
             window.speechSynthesis.speak(silentUtterance);
         }
     }, []);
