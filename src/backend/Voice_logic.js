@@ -119,16 +119,18 @@ export const useVoiceLogic = () => {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'es-ES';
 
-            // Buscar una buena voz en español (preferiblemente femenina y natural)
+            // Buscar una voz menos robótica (Google, Online, Natural)
             const voices = window.speechSynthesis.getVoices();
-            const esVoice = voices.find(voice => voice.lang.startsWith('es-') &&
-                (voice.name.includes('Google') || voice.name.includes('Natural') || voice.name.includes('Microsoft') || voice.name.includes('Helena')));
+            let esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Online') || v.name.includes('Natural')));
+            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es') && v.name.includes('Microsoft'));
+            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es'));
+            
             if (esVoice) {
                 utterance.voice = esVoice;
             }
 
-            utterance.rate = 0.95; // Un poco más lento para calmar
-            utterance.pitch = 1.0;
+            utterance.rate = 1.0; // Velocidad normal para fluidez
+            utterance.pitch = 1.1; // Tono más alto para sonar menos robótico
 
             window.speechSynthesis.speak(utterance);
         }
@@ -157,15 +159,25 @@ export const useVoiceLogic = () => {
         const textLower = text.toLowerCase();
         const emergencyKeywords = ["suicidar", "suicidio", "matar", "quitarme la vida", "no quiero vivir", "morir"];
         if (emergencyKeywords.some(keyword => textLower.includes(keyword))) {
-            const emergencyResponse = "He detectado que podrías estar en peligro. Tu seguridad es lo más importante para mí. Voy a contactar a tu línea de emergencia de inmediato.";
-            setMessages(prev => [...prev, { role: 'model', text: emergencyResponse }]);
-            speakResponse(emergencyResponse);
-            
+            // Paso 1: Guiar la respiración para calmar
+            const breathingResponse = "Detecto que estás pasando por un momento muy difícil. Antes de todo, necesito que respires conmigo. Inhala profundamente... mantén el aire... y exhala lentamente.";
+            setMessages(prev => [...prev, { role: 'model', text: breathingResponse }]);
+            speakResponse(breathingResponse);
+
+            // Paso 2: Repetir respiración después de unos segundos
+            setTimeout(() => {
+                const breathingRepeat = "Muy bien. Una vez más: Inhala... mantén... exhala despacio. Tu seguridad es lo más importante. Voy a contactar ayuda de inmediato.";
+                setMessages(prev => [...prev, { role: 'model', text: breathingRepeat }]);
+                speakResponse(breathingRepeat);
+            }, 8000);
+
+            // Paso 3: Llamar a emergencias después de la guía de respiración
             const user = auth.currentUser;
             let emergencyNumber = "106";
             if (user) {
                 try {
-                    const settings = await getUserSettings(user.uid);
+                    const identifier = user.email || user.uid;
+                    const settings = await getUserSettings(identifier);
                     if (settings && settings.emergencyLine) {
                         emergencyNumber = settings.emergencyLine;
                     }
@@ -174,7 +186,7 @@ export const useVoiceLogic = () => {
             
             setTimeout(() => {
                 window.location.href = `tel:${emergencyNumber}`;
-            }, 3000);
+            }, 16000); // 16 segundos para que complete las dos respiraciones
             return;
         }
 
@@ -186,10 +198,40 @@ export const useVoiceLogic = () => {
             setMessages(prev => [...prev, { role: 'model', text: responseText }]);
             speakResponse(responseText);
         } catch (error) {
-            console.error("Error enviando mensaje a Gemini:", error);
-            const errorResponse = "Lo siento, tuve un problema al procesar tu mensaje. ¿Podrías repetirlo?";
-            setMessages(prev => [...prev, { role: 'model', text: errorResponse }]);
-            speakResponse(errorResponse);
+            console.warn("Error enviando mensaje a Gemini, usando OpenRouter (Llama 3) como respaldo:", error);
+            try {
+                // Fallback to OpenRouter
+                const llamaSystemInstruction = systemInstruction + " ESTÁ ESTRICTAMENTE PROHIBIDO HACER PREGUNTAS AL USUARIO. Bajo ninguna circunstancia uses signos de interrogación ni fomentes que el usuario siga hablando. Limítate a dar un consejo de apoyo o una sugerencia pasiva. Céntrate en dar apoyo psicológico.";
+                const openRouterMessages = [
+                    { role: 'system', content: llamaSystemInstruction },
+                    ...messages.map(m => ({ role: m.role === 'model' ? 'assistant' : 'user', content: m.text })),
+                    { role: 'user', content: text }
+                ];
+                
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "meta-llama/llama-3-8b-instruct",
+                        "temperature": 0.4,
+                        "messages": openRouterMessages
+                    })
+                });
+                
+                const data = await response.json();
+                const responseText = data.choices[0].message.content;
+                
+                setMessages(prev => [...prev, { role: 'model', text: responseText }]);
+                speakResponse(responseText);
+            } catch (fallbackError) {
+                console.error("Error en OpenRouter fallback:", fallbackError);
+                const errorResponse = "Lo siento, tuve un problema al procesar tu mensaje. ¿Podrías repetirlo?";
+                setMessages(prev => [...prev, { role: 'model', text: errorResponse }]);
+                speakResponse(errorResponse);
+            }
         }
     };
 
@@ -243,8 +285,31 @@ ${chatHistoryText}`;
                 }
             });
 
-            const result = await summaryModel.generateContent(prompt);
-            const responseText = result.response.text();
+            let responseText = "";
+            try {
+                const result = await summaryModel.generateContent(prompt);
+                responseText = result.response.text();
+            } catch (geminiError) {
+                console.warn("Fallo resumen con Gemini, usando OpenRouter Llama 3:", geminiError);
+                // Fallback para el resumen
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "meta-llama/llama-3-8b-instruct",
+                        "temperature": 0.1,
+                        "messages": [
+                            { role: "system", content: "Devuelve solo un JSON válido con las claves 'summary' y 'emotion'. No escribas texto extra." },
+                            { role: "user", content: prompt }
+                        ]
+                    })
+                });
+                const data = await response.json();
+                responseText = data.choices[0].message.content;
+            }
             
             // Try parsing JSON
             let summaryData = { summary: "Sesión completada.", emotion: "Neutral" };
@@ -252,7 +317,7 @@ ${chatHistoryText}`;
                  const cleanedText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
                  summaryData = JSON.parse(cleanedText);
             } catch (e) {
-                 console.error("Failed to parse Gemini summary JSON", e);
+                 console.error("Failed to parse summary JSON", e);
             }
 
             // Determine duration
@@ -286,8 +351,9 @@ ${chatHistoryText}`;
 
             const user = auth.currentUser;
             if (user) {
-                await saveSession(user.uid, sessionData);
-                console.log("Sesión guardada en Firebase");
+                const identifier = user.email || user.uid;
+                await saveSession(identifier, sessionData);
+                console.log("Sesión guardada en Firebase para el usuario:", identifier);
             } else {
                 console.warn("No hay usuario logueado, no se pudo guardar la sesión.");
             }

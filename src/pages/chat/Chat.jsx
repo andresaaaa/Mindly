@@ -6,11 +6,10 @@ import { useVoiceLogic } from '../../backend/Voice_logic.js';
 import './Chat_Style.css';
 
 const SIDEBAR_LINKS = [
-    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-    { icon: "mood", label: "Mood", route: "/chat", active: true },
-    { icon: "air", label: "Breath", route: "/sos" },
-    { icon: "edit_note", label: "Journal", route: "/historial" },
-    { icon: "person", label: "Me", route: "/configuracion" },
+  { icon: "mood", label: "Ánimo", route: "/chat", active: true },
+  { icon: "air", label: "Respirar", route: "/sos" },
+  { icon: "edit_note", label: "Diario", route: "/historial" },
+  { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 
 const VoiceInterface = () => {
@@ -81,7 +80,7 @@ const VoiceInterface = () => {
       {/* ── Sidebar Overlay ── */}
       <div
         className={`fixed inset-0 bg-black/20 backdrop-blur-sm z-[60] transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
+          }`}
         onClick={toggleSidebar}
         aria-hidden="true"
       />
@@ -89,7 +88,7 @@ const VoiceInterface = () => {
       {/* ── Sidebar Drawer ── */}
       <aside
         className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+          }`}
         aria-label="Menú principal"
       >
         <div className="p-8 flex items-center space-x-3 border-b border-primary/10">
@@ -146,7 +145,7 @@ const VoiceInterface = () => {
           </div>
           <div className="flex items-center gap-2">
             {isTextMode && (
-              <button 
+              <button
                 onClick={toggleMode}
                 className="glass-button w-12 h-12 flex md:hidden items-center justify-center rounded-full border-primary/20 text-primary hover:bg-primary/5 active:scale-95 transition-colors"
                 title="Modo Voz"
@@ -175,16 +174,15 @@ const VoiceInterface = () => {
 
         {/* Content Area Container */}
         <div className="flex-1 relative flex flex-col items-center justify-center">
-          
+
           {/* Voice Mode Container */}
-          <main 
-            className={`mode-transition flex flex-col items-center justify-center w-full absolute inset-0 ${
-              isTextMode ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
-            }`}
+          <main
+            className={`mode-transition flex flex-col items-center justify-center w-full absolute inset-0 ${isTextMode ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+              }`}
           >
-            <div 
-              className="orb-container cursor-pointer transition-transform hover:scale-105 active:scale-95" 
-              onClick={toggleListening} 
+            <div
+              className="orb-container cursor-pointer transition-transform hover:scale-105 active:scale-95"
+              onClick={toggleListening}
               title="Click para hablar/detener"
             >
               <div ref={glowRef} className={`vibrating-orb ${isListening ? 'bg-primary/40 scale-110' : ''}`}></div>
@@ -205,10 +203,9 @@ const VoiceInterface = () => {
           </main>
 
           {/* Text Mode Container */}
-          <main 
-            className={`mode-transition flex flex-col w-full h-full max-w-2xl mx-auto absolute inset-0 ${
-              isTextMode ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-10'
-            }`}
+          <main
+            className={`mode-transition flex flex-col w-full h-full max-w-2xl mx-auto absolute inset-0 ${isTextMode ? 'opacity-100 translate-y-0' : 'opacity-0 pointer-events-none translate-y-10'
+              }`}
           >
             {/* Mini Orb */}
             <div className="flex justify-center mb-4 shrink-0">
@@ -224,11 +221,10 @@ const VoiceInterface = () => {
             <div ref={chatScrollRef} className="flex-1 overflow-y-auto chat-scroll px-4 pb-4 space-y-6">
               {messages.map((msg, index) => (
                 <div key={index} className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'items-end ml-auto' : 'items-start'}`}>
-                  <div className={`${
-                    msg.role === 'user' 
-                      ? 'bg-primary/10 border border-primary/20 px-6 py-4 rounded-2xl rounded-tr-none text-body-md text-on-surface' 
+                  <div className={`${msg.role === 'user'
+                      ? 'bg-primary/10 border border-primary/20 px-6 py-4 rounded-2xl rounded-tr-none text-body-md text-on-surface'
                       : 'glass-button px-6 py-4 rounded-2xl rounded-tl-none text-body-md text-on-surface-variant'
-                  }`}>
+                    }`}>
                     {msg.text}
                   </div>
                   <span className={`text-label-sm text-neutral-custom/40 mt-2 ${msg.role === 'user' ? 'mr-1' : 'ml-1'}`}>
@@ -242,23 +238,22 @@ const VoiceInterface = () => {
 
         {/* Footer Area */}
         <footer className="mt-8 flex flex-col items-center gap-6 shrink-0 pb-24 md:pb-4">
-          
+
           {/* Text Mode Input Container */}
-          <div 
-            className={`w-full max-w-2xl flex items-center gap-3 transition-all duration-500 overflow-hidden ${
-              isTextMode ? 'opacity-100 translate-y-0 h-14' : 'opacity-0 pointer-events-none translate-y-10 h-0 m-0'
-            }`}
+          <div
+            className={`w-full max-w-2xl flex items-center gap-3 transition-all duration-500 overflow-hidden ${isTextMode ? 'opacity-100 translate-y-0 h-14' : 'opacity-0 pointer-events-none translate-y-10 h-0 m-0'
+              }`}
           >
             <div className="relative flex-1">
-              <input 
-                className="w-full h-14 pl-6 pr-12 rounded-full border border-primary/20 bg-white/50 backdrop-blur-md focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none text-on-surface placeholder-neutral-custom/40 transition-all" 
-                placeholder="Escribe aquí tu mensaje..." 
-                type="text" 
+              <input
+                className="w-full h-14 pl-6 pr-12 rounded-full border border-primary/20 bg-white/50 backdrop-blur-md focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none text-on-surface placeholder-neutral-custom/40 transition-all"
+                placeholder="Escribe aquí tu mensaje..."
+                type="text"
                 value={textInput}
                 onChange={(e) => setTextInput(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
-              <button 
+              <button
                 className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${isListening ? 'text-primary animate-pulse' : 'text-primary/60 hover:text-primary'}`}
                 onClick={toggleListening}
                 title={isListening ? "Detener grabación" : "Hablar por micrófono"}
@@ -266,7 +261,7 @@ const VoiceInterface = () => {
                 <span className="material-symbols-outlined">mic</span>
               </button>
             </div>
-            <button 
+            <button
               className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               onClick={handleSendText}
             >
@@ -275,8 +270,8 @@ const VoiceInterface = () => {
           </div>
 
           {/* Mode Toggle Button */}
-          <button 
-            onClick={toggleMode} 
+          <button
+            onClick={toggleMode}
             className={`glass-button items-center gap-3 px-8 py-4 rounded-full text-primary font-label-md text-label-md group hover:bg-primary/5 ${isTextMode ? 'hidden md:flex' : 'flex'}`}
           >
             <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">
@@ -296,31 +291,36 @@ const VoiceInterface = () => {
       </div>
 
       {/* Navbar Inferior (Solo Móvil) */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-primary/10 z-[50] flex justify-around items-center h-16 px-2 pb-safe" style={{ backgroundColor: "var(--color-surface, #fff)" }}>
+      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-primary/10 z-[50] flex justify-around items-center h-16 px-2 pb-safe">
         {SIDEBAR_LINKS.map((link) => (
           <button
-            key={link.route}
+            key={link.label}
             onClick={() => navigate(link.route)}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-              link.active ? "text-primary" : "text-on-surface-variant"
-            }`}
-            style={{ color: link.active ? "var(--color-primary, #e8a5cd)" : "var(--color-on-surface-variant, #82737a)", background: "transparent", border: "none" }}
+            className={`flex flex-col items-center justify-center w-16 h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant hover:text-primary transition-colors"
+              }`}
           >
-            <span className="material-icons-outlined text-[24px]">
-              {link.icon}
+            <div
+              className={`w-12 h-8 flex items-center justify-center rounded-full ${link.active ? "bg-primary-container" : ""
+                }`}
+            >
+              <span className="material-icons-outlined text-[24px]">
+                {link.icon}
+              </span>
+            </div>
+            <span className="text-[11px] font-medium tracking-wide">
+              {link.label}
             </span>
-            <span className="text-[10px] font-semibold">{link.label}</span>
           </button>
         ))}
         <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
-            style={{ background: "transparent", border: "none" }}
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+          style={{ background: "transparent", border: "none" }}
         >
-            <span className="material-icons-outlined text-[24px]">
-                logout
-            </span>
-            <span className="text-[10px] font-semibold">Salir</span>
+          <span className="material-icons-outlined text-[24px]">
+            logout
+          </span>
+          <span className="text-[10px] font-semibold">Salir</span>
         </button>
       </nav>
     </div>

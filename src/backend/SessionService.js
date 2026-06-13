@@ -21,14 +21,20 @@ export const getUserSessions = async (userId) => {
     try {
         const q = query(
             collection(db, SESSIONS_COLLECTION),
-            where("userId", "==", userId),
-            orderBy("createdAt", "desc")
+            where("userId", "==", userId)
         );
         const querySnapshot = await getDocs(q);
         const sessions = [];
         querySnapshot.forEach((doc) => {
             sessions.push({ id: doc.id, ...doc.data() });
         });
+        
+        // Ordenar localmente para evitar error de índice compuesto en Firebase
+        sessions.sort((a, b) => {
+            if (!a.createdAt || !b.createdAt) return 0;
+            return b.createdAt.toMillis() - a.createdAt.toMillis();
+        });
+        
         return sessions;
     } catch (error) {
         console.error("Error fetching sessions from Firebase:", error);

@@ -225,7 +225,7 @@ const LoginForm = () => {
       </main>
 
       <nav className="bottom-nav" aria-label="Pie de página">
-        <span>© 2026 Mindly. Digital Sanctuary for your mind.</span>
+        <span>© 2026 Mindly. Un santuario digital para tu mente.</span>
         <div className="links" style={{ display: 'flex', gap: '0.75rem' }}>
           <a href="#" className="hover:underline">Privacidad</a>
           <a href="#" className="hover:underline">Términos</a>

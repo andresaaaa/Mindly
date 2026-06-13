@@ -102,13 +102,13 @@ function AddContactModal({ onClose, onAdd }) {
                 onClick={e => e.stopPropagation()}
             >
                 <h3 style={{ fontWeight: 700, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 24 }}>
-                    Add Trusted Contact
+                    Agregar Contacto de Confianza
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                     {[
-                        { label: "Full Name", key: "name", placeholder: "e.g. Jane Doe" },
-                        { label: "Relation", key: "relation", placeholder: "e.g. Spouse, Therapist" },
-                        { label: "Phone", key: "phone", placeholder: "(555) 000-0000" },
+                        { label: "Nombre Completo", key: "name", placeholder: "Ej. María López" },
+                        { label: "Relación", key: "relation", placeholder: "Ej. Madre, Terapeuta" },
+                        { label: "Teléfono", key: "phone", placeholder: "(300) 000-0000" },
                     ].map(({ label, key, placeholder }) => (
                         <div key={key} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em" }}>
@@ -134,7 +134,7 @@ function AddContactModal({ onClose, onAdd }) {
                     >
                         Cancel
                     </button>
-                    <button className="btn-primary" onClick={submit}>Add Contact</button>
+                    <button className="btn-primary" onClick={submit}>Agregar Contacto</button>
                 </div>
             </div>
         </div>
@@ -142,11 +142,10 @@ function AddContactModal({ onClose, onAdd }) {
 }
 
 const SIDEBAR_LINKS = [
-    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-    { icon: "mood", label: "Mood", route: "/chat" },
-    { icon: "air", label: "Breath", route: "/sos" },
-    { icon: "edit_note", label: "Journal", route: "/historial" },
-    { icon: "person", label: "Me", route: "/configuracion", active: true },
+    { icon: "mood", label: "Ánimo", route: "/chat" },
+    { icon: "air", label: "Respirar", route: "/sos" },
+    { icon: "edit_note", label: "Diario", route: "/historial" },
+    { icon: "person", label: "Perfil", route: "/configuracion", active: true },
 ];
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -159,7 +158,7 @@ export default function ProfileSettings() {
     const [emergencyLine, setEmergencyLine] = useState("106");
     const [notifications, setNotifications] = useState({ push: true, weekly: true, quiet: false });
     const [formData, setFormData] = useState({
-        legalName: "Seraphina Wells", preferredName: "Sera", email: "sera.wells@mindly.io",
+        legalName: "", preferredName: "", email: "",
     });
     const [showModal, setShowModal] = useState(false);
     const [toast, setToast] = useState({ message: "", visible: false });
@@ -170,7 +169,14 @@ export default function ProfileSettings() {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                getUserSettings(currentUser.uid).then(data => {
+                // Fill personal info from Firebase Auth
+                setFormData({
+                    legalName: currentUser.displayName || "",
+                    preferredName: currentUser.displayName ? currentUser.displayName.split(" ")[0] : "",
+                    email: currentUser.email || "",
+                });
+                const identifier = currentUser.email || currentUser.uid;
+                getUserSettings(identifier).then(data => {
                     if (data) {
                         setVoicePersona(data.voicePersona || "Calm");
                         setFrequency(data.frequency || 3);
@@ -185,6 +191,7 @@ export default function ProfileSettings() {
                 }).catch(err => console.error(err));
             } else {
                 setContacts([]);
+                setFormData({ legalName: "", preferredName: "", email: "" });
             }
         });
         return () => unsubscribe();
@@ -221,19 +228,20 @@ export default function ProfileSettings() {
     };
 
     const handleSave = async () => {
-        if (!formData.email.includes("@")) { showToast("⚠️ Enter a valid email address."); return; }
+        if (!formData.email.includes("@")) { showToast("⚠️ Ingresa un correo válido."); return; }
         if (user) {
             try {
-                await saveUserSettings(user.uid, {
+                const identifier = user.email || user.uid;
+                await saveUserSettings(identifier, {
                     voicePersona,
                     frequency,
                     notifications,
                     emergencyLine,
                     trustedContact: contacts.length > 0 ? contacts[0] : null
                 });
-                showToast("✓ Preferences saved successfully!");
+                showToast("✓ Preferencias guardadas correctamente.");
             } catch (err) {
-                showToast("⚠️ Error saving preferences.");
+                showToast("⚠️ Error al guardar preferencias.");
             }
         } else {
             showToast("⚠️ Debes iniciar sesión para guardar.");
@@ -241,14 +249,14 @@ export default function ProfileSettings() {
     };
 
     const handleDiscard = () => {
-        setFormData({ legalName: "Seraphina Wells", preferredName: "Sera", email: "sera.wells@mindly.io" });
+        setFormData({ legalName: user?.displayName || "", preferredName: user?.displayName ? user.displayName.split(" ")[0] : "", email: user?.email || "" });
         setVoicePersona("Calm");
         setFrequency(3);
         setNotifications({ push: true, weekly: true, quiet: false });
-        showToast("Changes discarded.");
+        showToast("Cambios descartados.");
     };
 
-    const frequencyLabel = `${frequency} ${frequency === 1 ? "time" : "times"} / day`;
+    const frequencyLabel = `${frequency} ${frequency === 1 ? "vez" : "veces"} / día`;
 
     return (
         <div
@@ -321,7 +329,7 @@ export default function ProfileSettings() {
                     </button>
                     <button
                         className="flex items-center gap-2"
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/chat')}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
@@ -348,25 +356,31 @@ export default function ProfileSettings() {
                 <section className="section-card card-shadow">
                     <div style={{ position: "absolute", top: 32, right: 32 }}>
                         <div style={{ position: "relative", cursor: "pointer" }}>
-                            <img
-                                alt="Profile"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5TsFpo6ZQ5j61LR7cQm_dv7nm0iUEoirefi6OAbKFWUsorV7jE3kyNJeDdMZl21Xk_4-56Fpg7x4alUQ_CwM1GcQSsr5YcDSXFWweIsfRq3ejrXrfZIaCvaV_sgan4HTRJ9TBO2_sS4vPWYyQKkjiNOz8lioZAS4Bi83RnVc9Z739SFJAjfTx24ldgMFJiXLyf56BKjB6rJNmUcVBv0zjVTfiFTL1BJTFY66AqCuKDwLwNWn26xVv9z3CRjcOAuwdpUhkgfHpVrA"
-                                style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--color-primary-container)", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", display: "block" }}
-                            />
+                            {user?.photoURL ? (
+                                <img
+                                    alt="Profile"
+                                    src={user.photoURL}
+                                    style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--color-primary-container)", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", display: "block" }}
+                                />
+                            ) : (
+                                <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--color-surface-container)", border: "2px solid var(--color-primary-container)", boxShadow: "0 1px 3px rgba(0,0,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <span className="material-icons-outlined" style={{ fontSize: 32, color: "var(--color-on-surface-variant)" }}>person</span>
+                                </div>
+                            )}
                             <div style={{ position: "absolute", bottom: -4, right: -4, background: "var(--color-primary)", padding: 6, borderRadius: "50%", border: "2px solid var(--color-surface-container-lowest)", display: "flex" }}>
                                 <span className="material-symbols-outlined" style={{ color: "white", fontSize: 12, lineHeight: 1 }}>edit</span>
                             </div>
                         </div>
                     </div>
                     <header style={{ marginBottom: 32 }}>
-                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>Personal Information</h2>
-                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Update your basic details used for therapeutic sessions.</p>
+                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>Información Personal</h2>
+                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Actualiza tus datos básicos usados en las sesiones terapéuticas.</p>
                     </header>
                     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                         <div className="grid-2" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                             {[
-                                { label: "Legal Name", key: "legalName" },
-                                { label: "Preferred Name", key: "preferredName" },
+                                { label: "Nombre Completo", key: "legalName" },
+                                { label: "Nombre Preferido", key: "preferredName" },
                             ].map(({ label, key }) => (
                                 <div key={key} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                                     <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>{label}</label>
@@ -375,7 +389,7 @@ export default function ProfileSettings() {
                             ))}
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>Email Address</label>
+                            <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>Correo Electrónico</label>
                             <input className="mindly-input" type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                     </div>
@@ -384,17 +398,17 @@ export default function ProfileSettings() {
                 {/* 2. A.I.S.E Intelligence Settings */}
                 <section className="section-card card-shadow">
                     <header style={{ marginBottom: 32 }}>
-                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>A.I.S.E Intelligence Settings</h2>
-                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Customize your AI companion's vocal presence and responsiveness.</p>
+                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>Configuración de A.I.S.E</h2>
+                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Personaliza la presencia vocal y la capacidad de respuesta de tu compañero IA.</p>
                     </header>
                     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
                         <div>
-                            <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", marginBottom: 16 }}>Voice Persona</label>
+                            <label style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", marginBottom: 16 }}>Personalidad de Voz</label>
                             <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
                                 {[
-                                    { name: "Calm", description: "Soft, nurturing, and melodic tone." },
-                                    { name: "Steady", description: "Direct, grounding, and rhythmic." },
-                                    { name: "Bright", description: "Energetic, encouraging, and clear." },
+                                    { name: "Calm", description: "Tono suave, calmante y melodioso." },
+                                    { name: "Steady", description: "Directo, centrado y rítmico." },
+                                    { name: "Bright", description: "Energético, motivador y claro." },
                                 ].map(({ name, description }) => (
                                     <VoiceCard key={name} name={name} description={description} selected={voicePersona === name} onClick={() => setVoicePersona(name)} />
                                 ))}
@@ -402,7 +416,7 @@ export default function ProfileSettings() {
                         </div>
                         <div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
-                                <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em" }}>Check-in Frequency</label>
+                                <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em" }}>Frecuencia de Revisión</label>
                                 <span style={{ color: "var(--color-primary)", fontWeight: 700, fontSize: 14 }}>{frequencyLabel}</span>
                             </div>
                             <input
@@ -411,7 +425,7 @@ export default function ProfileSettings() {
                                 style={{ width: "100%", height: 6, background: "var(--color-surface-container)", borderRadius: 9999, appearance: "none", cursor: "pointer" }}
                             />
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                                {["Low Presence", "High Presence"].map(l => (
+                                {["Baja Presencia", "Alta Presencia"].map(l => (
                                     <span key={l} style={{ fontSize: 10, fontWeight: 700, color: "var(--color-outline-variant)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{l}</span>
                                 ))}
                             </div>
@@ -423,31 +437,31 @@ export default function ProfileSettings() {
                 <section className="section-card card-shadow">
                     <header style={{ marginBottom: 32 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-                            <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", lineHeight: 1.3 }}>Trusted Contacts</h2>
+                            <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", lineHeight: 1.3 }}>Contactos de Confianza</h2>
                             <span style={{ background: "var(--color-error-container)", color: "var(--color-on-error-container)", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 9999, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
-                                Emergency SOS
+                                SOS Emergencia
                             </span>
                         </div>
-                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Individuals Mindly will reach out to if AI indicators detect a crisis level.</p>
+                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Personas a las que Mindly contactará si detecta una crisis.</p>
                     </header>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-                        <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>Emergency Line</label>
-                        <input className="mindly-input" type="text" value={emergencyLine} onChange={e => setEmergencyLine(e.target.value)} placeholder="e.g. 106, 911" />
+                        <label style={{ fontSize: 14, fontWeight: 600, color: "var(--color-neutral-text)", letterSpacing: "0.05em", paddingLeft: 4 }}>Línea de Emergencia</label>
+                        <input className="mindly-input" type="text" value={emergencyLine} onChange={e => setEmergencyLine(e.target.value)} placeholder="Ej. 106, 911" />
                     </div>
 
                     <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                         {contacts.length === 0 && (
-                            <p style={{ textAlign: "center", color: "var(--color-neutral-text)", fontSize: 14, padding: "24px 0" }}>No trusted contacts yet.</p>
+                            <p style={{ textAlign: "center", color: "var(--color-neutral-text)", fontSize: 14, padding: "24px 0" }}>Aún no tienes contactos de confianza.</p>
                         )}
                         {contacts.map((c, i) => (
-                            <ContactItem key={i} {...c} onDelete={() => { setContacts(prev => prev.filter((_, idx) => idx !== i)); showToast("Contact removed."); }} />
+                            <ContactItem key={i} {...c} onDelete={() => { setContacts(prev => prev.filter((_, idx) => idx !== i)); showToast("Contacto eliminado."); }} />
                         ))}
                     </div>
                     {contacts.length === 0 && (
                         <button className="btn-dashed" onClick={() => setShowModal(true)}>
                             <span className="material-symbols-outlined">add_circle</span>
-                            Add Trusted Contact
+                            Agregar Contacto de Confianza
                         </button>
                     )}
                 </section>
@@ -455,14 +469,14 @@ export default function ProfileSettings() {
                 {/* 4. Notification Hub */}
                 <section className="section-card card-shadow">
                     <header style={{ marginBottom: 32 }}>
-                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>Notification Hub</h2>
-                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Choose how you want to be reminded to breathe.</p>
+                        <h2 style={{ fontSize: 32, fontWeight: 600, color: "var(--color-on-surface)", marginBottom: 4, lineHeight: 1.3 }}>Centro de Notificaciones</h2>
+                        <p style={{ color: "var(--color-neutral-text)", fontSize: 14 }}>Elige cómo quieres que te recordemos respirar.</p>
                     </header>
                     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                         {[
-                            { key: "push", icon: "notifications", iconBg: "rgba(232,165,205,0.2)", iconColor: "var(--color-primary)", title: "Push Notifications", subtitle: "Real-time therapeutic nudges." },
-                            { key: "weekly", icon: "mail", iconBg: "rgba(139,239,247,0.2)", iconColor: "var(--color-secondary)", title: "Weekly Reflections", subtitle: "Detailed email summary of your mood trends." },
-                            { key: "quiet", icon: "do_not_disturb_on", iconBg: "var(--color-surface-container)", iconColor: "var(--color-neutral-text)", title: "Quiet Hours", subtitle: "Mute all non-SOS alerts after 10:00 PM." },
+                            { key: "push", icon: "notifications", iconBg: "rgba(232,165,205,0.2)", iconColor: "var(--color-primary)", title: "Notificaciones Push", subtitle: "Recordatorios terapéuticos en tiempo real." },
+                            { key: "weekly", icon: "mail", iconBg: "rgba(139,239,247,0.2)", iconColor: "var(--color-secondary)", title: "Reflexiones Semanales", subtitle: "Resumen semanal detallado de tu estado de ánimo." },
+                            { key: "quiet", icon: "do_not_disturb_on", iconBg: "var(--color-surface-container)", iconColor: "var(--color-neutral-text)", title: "Horas de Silencio", subtitle: "Silenciar todas las alertas no-SOS después de las 10:00 PM." },
                         ].map(({ key, icon, iconBg, iconColor, title, subtitle }) => (
                             <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -486,9 +500,9 @@ export default function ProfileSettings() {
                         onClick={handleDiscard}
                         style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-neutral-text)", fontFamily: "Montserrat, sans-serif", fontWeight: 600, fontSize: 14, letterSpacing: "0.05em" }}
                     >
-                        Discard Changes
+                        Descartar Cambios
                     </button>
-                    <button className="btn-primary" onClick={handleSave}>Save Preferences</button>
+                    <button className="btn-primary" onClick={handleSave}>Guardar Preferencias</button>
                 </div>
             </main>
 
@@ -497,10 +511,10 @@ export default function ProfileSettings() {
                 <div className="footer-inner" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "48px 24px", maxWidth: 1280, margin: "0 auto", gap: 32 }}>
                     <div className="footer-brand" style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "center" }}>
                         <div style={{ fontSize: 24, fontWeight: 700, color: "var(--color-primary)", fontFamily: "Montserrat, sans-serif" }}>Mindly</div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-on-surface-variant)", letterSpacing: "0.05em" }}>© 2024 Mindly. A sanctuary for your mind.</p>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: "var(--color-on-surface-variant)", letterSpacing: "0.05em" }}>© 2024 Mindly. Un santuario digital para tu mente.</p>
                     </div>
                     <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 24 }}>
-                        {["Privacy Policy", "Terms of Service", "SOS Resources", "Contact Support"].map(label => (
+                        {["Política de Privacidad", "Términos de Servicio", "Recursos SOS", "Soporte"].map(label => (
                             <a key={label} href="#" className="footer-link" onClick={e => e.preventDefault()}>{label}</a>
                         ))}
                     </div>
@@ -508,7 +522,7 @@ export default function ProfileSettings() {
             </footer>
 
             {/* Modal */}
-            {showModal && <AddContactModal onClose={() => setShowModal(false)} onAdd={(c) => { setContacts(prev => [...prev, c]); showToast("✓ Contact added!"); }} />}
+            {showModal && <AddContactModal onClose={() => setShowModal(false)} onAdd={(c) => { setContacts(prev => [...prev, c]); showToast("✓ Contacto agregado."); }} />}
 
             {/* Toast */}
             <Toast message={toast.message} visible={toast.visible} />
@@ -519,9 +533,8 @@ export default function ProfileSettings() {
                     <button
                         key={link.route}
                         onClick={() => navigate(link.route)}
-                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                            link.active ? "text-primary" : "text-on-surface-variant"
-                        }`}
+                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant"
+                            }`}
                         style={{ color: link.active ? "var(--color-primary)" : "var(--color-on-surface-variant)", background: "transparent", border: "none" }}
                     >
                         <span className="material-icons-outlined text-[24px]">

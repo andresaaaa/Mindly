@@ -143,11 +143,10 @@ const PAGE_SIZE = 3;
 
 // ─── Sidebar links ────────────────────────────────────────────────────────────
 const SIDEBAR_LINKS = [
-    { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-    { icon: "mood", label: "Mood", route: "/chat" },
-    { icon: "air", label: "Breath", route: "/sos" },
-    { icon: "edit_note", label: "Journal", route: "/historial", active: true },
-    { icon: "person", label: "Me", route: "/configuracion" },
+    { icon: "mood", label: "Ánimo", route: "/chat" },
+    { icon: "air", label: "Respirar", route: "/sos" },
+    { icon: "edit_note", label: "Diario", route: "/historial", active: true },
+    { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -252,13 +251,56 @@ function SessionSkeleton() {
     );
 }
 
-/** Modal de detalle de sesión */
 function SessionModal({ session, onClose }) {
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    useEffect(() => {
+        return () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
+    const togglePlay = () => {
+        if (!('speechSynthesis' in window)) {
+            alert("Tu navegador no soporta reproducción de voz.");
+            return;
+        }
+        
+        if (isPlaying) {
+            window.speechSynthesis.cancel();
+            setIsPlaying(false);
+        } else {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(session.summary);
+            utterance.lang = 'es-ES';
+            
+            const voices = window.speechSynthesis.getVoices();
+            // Buscar una voz menos robótica (Google, Online o Natural)
+            let esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Online') || v.name.includes('Natural')));
+            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es') && v.name.includes('Microsoft'));
+            if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es'));
+            
+            if (esVoice) utterance.voice = esVoice;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.1; // Tono más alto para sonar menos robótico
+            
+            utterance.onend = () => setIsPlaying(false);
+            
+            window.speechSynthesis.speak(utterance);
+            setIsPlaying(true);
+        }
+    };
+
     if (!session) return null;
     return (
         <div
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[90] flex items-center justify-center px-6"
-            onClick={onClose}
+            onClick={() => {
+                if (isPlaying) window.speechSynthesis.cancel();
+                onClose();
+            }}
         >
             <div
                 className="glass-card bg-surface rounded-2xl p-8 max-w-md w-full shadow-2xl"
@@ -296,9 +338,14 @@ function SessionModal({ session, onClose }) {
 
                 {/* Actions */}
                 <div className="flex gap-3">
-                    <button className="flex-1 py-3 rounded-full bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2">
-                        <span className="material-icons-outlined text-[18px]">play_circle</span>
-                        Reproducir
+                    <button 
+                        onClick={togglePlay}
+                        className="flex-1 py-3 rounded-full bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <span className="material-icons-outlined text-[18px]">
+                            {isPlaying ? 'stop_circle' : 'play_circle'}
+                        </span>
+                        {isPlaying ? 'Detener' : 'Reproducir'}
                     </button>
                     <button className="flex-1 py-3 rounded-full bg-secondary/10 text-secondary font-semibold text-sm hover:bg-secondary/20 transition-colors flex items-center justify-center gap-2">
                         <span className="material-icons-outlined text-[18px]">edit_note</span>
@@ -320,12 +367,12 @@ export default function MemoryLane({
     // ── Estado ──────────────────────────────────────────────────────────────
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedBar, setSelectedBar] = useState(null);
-    const [moodFilter, setMoodFilter] = useState("All");
+    const [moodFilter, setMoodFilter] = useState("Todos");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [activeSession, setActiveSession] = useState(null);
-    
+
     const [fetchedSessions, setFetchedSessions] = useState(null);
     const [user, setUser] = useState(null);
 
@@ -333,7 +380,8 @@ export default function MemoryLane({
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                getUserSessions(currentUser.uid).then(data => {
+                const identifier = currentUser.email || currentUser.uid;
+                getUserSessions(identifier).then(data => {
                     setFetchedSessions(data);
                     setLoading(false);
                 }).catch(err => {
@@ -418,21 +466,21 @@ export default function MemoryLane({
             days.push(d);
         }
         const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-        
+
         return days.map(d => {
             const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const daySessions = sessions.filter(s => s.date === dateStr);
             const dayName = dayNames[d.getDay()];
-            
+
             if (daySessions.length === 0) {
                 return { day: dayName, height: 20, color: "bg-surface-container", colorHover: "#ccc", score: 0, mood: "None" };
             }
-            
+
             const lastSession = daySessions[0];
             const mainMood = lastSession.moods[0];
             const score = Math.min(10, Math.max(1, lastSession.minutes / 2));
             const height = Math.min(180, Math.max(20, score * 18));
-            
+
             let colorHover = "#ccc";
             if (mainMood.label === "Tranquilo") colorHover = "#7be0e8";
             else if (mainMood.label === "Introspectivo" || mainMood.label === "Agradecido") colorHover = "#e8a5cd";
@@ -440,11 +488,11 @@ export default function MemoryLane({
             else if (mainMood.label === "Ansioso") colorHover = "#7D526C";
             else if (mainMood.label === "Desahogo") colorHover = "#d8b4e2";
             else if (mainMood.label === "Neutral") colorHover = "#a8a8a8";
-            
+
             let colorBase = mainMood.bg.replace("100", "60").replace("10", "40");
             if (mainMood.label === "Ansioso") colorBase = "bg-[#7D526C]";
             else if (mainMood.label === "Neutral") colorBase = "bg-gray-400";
-            
+
             return {
                 day: dayName,
                 height: height,
@@ -535,7 +583,7 @@ export default function MemoryLane({
                     </button>
                     <button
                         className="flex items-center gap-2"
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/chat')}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
@@ -589,13 +637,13 @@ export default function MemoryLane({
 
                         {/* Barras o Empty State */}
                         {sessions.length === 0 && !loading ? (
-                             <div className="flex flex-col items-center justify-center h-48 md:h-56 w-full text-on-surface-variant text-center gap-3">
+                            <div className="flex flex-col items-center justify-center h-48 md:h-56 w-full text-on-surface-variant text-center gap-3">
                                 <span className="material-icons-outlined text-[48px] text-outline opacity-50">show_chart</span>
                                 <div>
                                     <p className="font-semibold text-sm">Sin historial de emociones</p>
                                     <p className="text-xs opacity-80 max-w-[200px] mx-auto mt-1">Completa tu primera sesión con la IA para ver tu flujo emocional aquí.</p>
                                 </div>
-                             </div>
+                            </div>
                         ) : (
                             <div className="flex items-end justify-between gap-1 h-48 md:h-56 px-1 md:px-3 w-full overflow-hidden">
                                 {dynamicChartData.map((bar, i) => (
@@ -637,7 +685,7 @@ export default function MemoryLane({
                             <span className="material-icons-outlined text-primary">bolt</span>
                             <div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-neutral">{totalMins}</h2>
-                                <p className="text-sm text-on-surface-variant mb-3">Minutes Recorded</p>
+                                <p className="text-sm text-on-surface-variant mb-3">Minutos Registrados</p>
                                 {/* Barra de progreso */}
                                 <div className="h-1.5 bg-primary/20 rounded-full overflow-hidden">
                                     <div
@@ -656,7 +704,7 @@ export default function MemoryLane({
                             <span className="material-icons-outlined text-secondary">psychology</span>
                             <div>
                                 <h2 className="text-xl md:text-2xl font-bold text-neutral">{dominant}</h2>
-                                <p className="text-sm text-on-surface-variant mb-2">Dominant Mood</p>
+                                <p className="text-sm text-on-surface-variant mb-2">Emoción Dominante</p>
                                 <p className="text-[11px] text-outline">
                                     Basado en {sessions.length} sesiones
                                 </p>
@@ -669,7 +717,7 @@ export default function MemoryLane({
                 <div>
                     {/* Header con buscador y filtros */}
                     <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                        <h3 className="text-xl font-bold text-neutral">Recent Sessions</h3>
+                        <h3 className="text-xl font-bold text-neutral">Sesiones Recientes</h3>
                         <div className="flex items-center gap-3">
                             {/* Búsqueda */}
                             <div className="relative">
@@ -766,9 +814,8 @@ export default function MemoryLane({
                     <button
                         key={link.route}
                         onClick={() => navigate(link.route)}
-                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                            link.active ? "text-primary" : "text-on-surface-variant"
-                        }`}
+                        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant"
+                            }`}
                         style={{ color: link.active ? "var(--color-primary, #e8a5cd)" : "var(--color-on-surface-variant, #82737a)", background: "transparent", border: "none" }}
                     >
                         <span className="material-icons-outlined text-[24px]">

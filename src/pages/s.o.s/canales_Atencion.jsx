@@ -36,18 +36,15 @@ const BREATH_PHASES = [
 
 /** Recursos de apoyo (extensible fácilmente) */
 const RESOURCES = [
-  { icon: "forum", label: "Chat de Crisis", href: "#chat-crisis" },
-  { icon: "map", label: "Centros Cercanos", href: "#centros" },
-  { icon: "menu_book", label: "Protocolo Clínico Mindly v4.2", href: "#protocolo" },
+  { icon: "map", label: "Centros Cercanos", id: "centros" },
 ];
 
 /** Rutas del sidebar */
 const SIDEBAR_LINKS = [
-  { icon: "dashboard", label: "Dashboard", route: "/dashboard" },
-  { icon: "mood", label: "Mood", route: "/chat" },
-  { icon: "air", label: "Breath", route: "/sos", active: true },
-  { icon: "edit_note", label: "Journal", route: "/historial" },
-  { icon: "person", label: "Me", route: "/configuracion" },
+  { icon: "mood", label: "Ánimo", route: "/chat" },
+  { icon: "air", label: "Respirar", route: "/sos", active: true },
+  { icon: "edit_note", label: "Diario", route: "/historial" },
+  { icon: "person", label: "Perfil", route: "/configuracion" },
 ];
 
 /** Rutas del bottom nav (móvil) */
@@ -120,7 +117,8 @@ export default function EmergencyMode({
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        getUserSettings(currentUser.uid).then(data => {
+        const identifier = currentUser.email || currentUser.uid;
+        getUserSettings(identifier).then(data => {
           if (data) {
             if (data.emergencyLine) setSavedEmergencyLine(data.emergencyLine);
             if (data.trustedContact) setSavedContact({ name: data.trustedContact.name, phone: `tel:${data.trustedContact.phone}` });
@@ -131,8 +129,10 @@ export default function EmergencyMode({
     return () => unsubscribe();
   }, []);
 
-  // ── Estado del sidebar ──────────────────────────────────────────────────
+  // ── Estado del sidebar y mapa ──────────────────────────────────────────
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [voiceBreathing, setVoiceBreathing] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -175,6 +175,44 @@ export default function EmergencyMode({
     timeout = setTimeout(advancePhase, BREATH_PHASES[0].duration);
     return () => clearTimeout(timeout);
   }, []); // se ejecuta sólo al montar
+
+  // ── Voz para respiración ─────────────────────────────────────────────
+  const voiceBreathingRef = useRef(voiceBreathing);
+  voiceBreathingRef.current = voiceBreathing;
+
+  const speakBreathPhase = useCallback((text) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'es-ES';
+    const voices = window.speechSynthesis.getVoices();
+    let esVoice = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Online') || v.name.includes('Natural')));
+    if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es') && v.name.includes('Microsoft'));
+    if (!esVoice) esVoice = voices.find(v => v.lang.startsWith('es'));
+    if (esVoice) utterance.voice = esVoice;
+    utterance.rate = 0.85;
+    utterance.pitch = 1.1;
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  useEffect(() => {
+    if (voiceBreathing) {
+      const phaseTexts = {
+        "Inhala": "Inhala profundamente",
+        "Mantén": "Mantén el aire",
+        "Exhala": "Exhala lentamente",
+        "Pausa": "Pausa",
+      };
+      speakBreathPhase(phaseTexts[BREATH_PHASES[phaseIndex].label] || BREATH_PHASES[phaseIndex].label);
+    }
+  }, [phaseIndex, voiceBreathing, speakBreathPhase]);
+
+  const toggleVoiceBreathing = () => {
+    if (voiceBreathing) {
+      window.speechSynthesis?.cancel();
+    }
+    setVoiceBreathing(prev => !prev);
+  };
 
   // ── Timer de sesión ────────────────────────────────────────────────────
   useEffect(() => {
@@ -248,6 +286,32 @@ export default function EmergencyMode({
         aria-hidden="true"
       />
 
+      {/* ── Mapa Modal ── */}
+      {mapOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] flex items-center justify-center px-4" onClick={() => setMapOpen(false)}>
+          <div className="shadow-mindly bg-surface rounded-xl p-4 w-full max-w-4xl h-[80vh] flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-headline-sm text-primary">Centros de Asistencia Psicológica</h2>
+              <button onClick={() => setMapOpen(false)} className="text-on-surface-variant hover:text-error transition-colors">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="flex-1 rounded-lg overflow-hidden border border-outline-variant/30">
+              <iframe 
+                src="https://maps.google.com/maps?q=centros+de+atencion+psicologica+en+Aguachica+Cesar+Colombia&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen="" 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Centros Cercanos"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Sidebar Drawer ── */}
       <aside
         className={`fixed top-0 left-0 h-full w-72 bg-surface z-[70] shadow-2xl border-r border-primary/10 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -306,7 +370,7 @@ export default function EmergencyMode({
           </button>
           <button
             className="flex items-center gap-2"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/chat')}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor" opacity="0.3" />
@@ -437,24 +501,42 @@ export default function EmergencyMode({
           <p className="mt-4 text-sm text-on-surface-variant max-w-sm text-center">
             Sigue el ritmo del círculo para calmar tu respiración.
           </p>
+          <button
+            onClick={toggleVoiceBreathing}
+            className={`mt-4 flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
+              voiceBreathing
+                ? "bg-primary text-white shadow-lg"
+                : "bg-surface-container text-on-surface-variant hover:bg-primary/10 border border-outline-variant/30"
+            }`}
+          >
+            <span className="material-icons-outlined text-[18px]">
+              {voiceBreathing ? "volume_up" : "volume_off"}
+            </span>
+            {voiceBreathing ? "Voz activa" : "Activar voz"}
+          </button>
         </div>
 
         {/* ── Crisis Resources ── */}
-        <div className="shadow-mindly bg-surface-container-low rounded-lg p-5">
+        <div className="shadow-mindly bg-surface-container-low rounded-lg p-5 max-w-sm mx-auto">
           <h3 className="font-label-md text-xs text-primary mb-4 uppercase tracking-widest">
             Recursos de Apoyo
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {RESOURCES.map((res) => (
-              <a
-                key={res.href}
-                href={res.href}
-                className="flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-primary-container/10 transition-colors group border border-outline-variant/30 press-scale"
-                onClick={(e) => { e.preventDefault(); onNavigate?.(res.href.replace("#", "")); }}
+              <button
+                key={res.id}
+                className="flex items-center space-x-3 p-3 rounded-xl bg-white hover:bg-primary-container/10 transition-colors group border border-outline-variant/30 press-scale w-full text-left"
+                onClick={() => {
+                  if (res.id === "centros") {
+                    setMapOpen(true);
+                  } else {
+                    onNavigate?.(res.id);
+                  }
+                }}
               >
                 <span className="material-symbols-outlined text-primary">{res.icon}</span>
                 <span className="font-label-md text-label-md text-left">{res.label}</span>
-              </a>
+              </button>
             ))}
           </div>
         </div>
@@ -470,7 +552,7 @@ export default function EmergencyMode({
             <a className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Contacto</a>
           </div>
           <div className="font-label-sm text-label-sm text-outline">
-            © 2024 Mindly. Digital Sanctuary for your mind.
+            © 2024 Mindly. Un santuario digital para tu mente.
           </div>
         </div>
       </footer>
@@ -481,9 +563,8 @@ export default function EmergencyMode({
           <button
             key={link.route}
             onClick={() => navigate(link.route)}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-              link.active ? "text-primary" : "text-on-surface-variant"
-            }`}
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${link.active ? "text-primary" : "text-on-surface-variant"
+              }`}
             style={{ color: link.active ? "var(--color-primary, #e8a5cd)" : "var(--color-on-surface-variant, #82737a)", background: "transparent", border: "none" }}
           >
             <span className="material-icons-outlined text-[24px]">
@@ -493,14 +574,14 @@ export default function EmergencyMode({
           </button>
         ))}
         <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
-            style={{ background: "transparent", border: "none" }}
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-on-surface-variant"
+          style={{ background: "transparent", border: "none" }}
         >
-            <span className="material-icons-outlined text-[24px]">
-                logout
-            </span>
-            <span className="text-[10px] font-semibold">Salir</span>
+          <span className="material-icons-outlined text-[24px]">
+            logout
+          </span>
+          <span className="text-[10px] font-semibold">Salir</span>
         </button>
       </nav>
     </div>
